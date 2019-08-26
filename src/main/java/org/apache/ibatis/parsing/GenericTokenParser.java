@@ -93,6 +93,7 @@ public class GenericTokenParser {
           offset = src.length;
         } else {
           // 找到了closeToken，调用handleToken()来解析占位符
+          // 这里调用的是 org.apache.ibatis.parsing.PropertyParser.VariableTokenHandler.handleToken()
           builder.append(handler.handleToken(expression.toString()));
           offset = end + closeToken.length();
         }

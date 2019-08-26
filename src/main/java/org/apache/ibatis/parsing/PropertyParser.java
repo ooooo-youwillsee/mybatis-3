@@ -76,23 +76,33 @@ public class PropertyParser {
 
     @Override
     public String handleToken(String content) {
+      // 如果properties不为null
       if (variables != null) {
         String key = content;
+        // 是否启用默认值
         if (enableDefaultValue) {
+          // 获得默认的分隔符的索引
           final int separatorIndex = content.indexOf(defaultValueSeparator);
           String defaultValue = null;
+          // 如果存在默认分隔符
           if (separatorIndex >= 0) {
+            // 获得要解析的key
             key = content.substring(0, separatorIndex);
+            // 获得默认值
             defaultValue = content.substring(separatorIndex + defaultValueSeparator.length());
           }
+          // 如果默认值不为null
           if (defaultValue != null) {
+            // 调用getProperty()方法来获取对应的值，如果对应的值不存在，就是用默认值
             return variables.getProperty(key, defaultValue);
           }
         }
+        // 存在key，就直接获取，如果不存在，就直接返回 "${" + content + "}"
         if (variables.containsKey(key)) {
           return variables.getProperty(key);
         }
       }
+      // 如果properties为null，就不会解析，直接返回结果
       return "${" + content + "}";
     }
   }

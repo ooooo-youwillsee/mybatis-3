@@ -31,11 +31,17 @@ import org.w3c.dom.NodeList;
  */
 public class XNode {
 
+  // 包装的Node节点
   private final Node node;
+  // node节点名称
   private final String name;
+  // node节点的内容
   private final String body;
+  // node的属性
   private final Properties attributes;
+  // properties属性 ，标签<properties>中定义的键值对
   private final Properties variables;
+  // xpathParser (xpath解析器)
   private final XPathParser xpathParser;
 
   public XNode(XPathParser xpathParser, Node node, Properties variables) {
@@ -43,7 +49,9 @@ public class XNode {
     this.node = node;
     this.name = node.getNodeName();
     this.variables = variables;
+    // 解析节点属性
     this.attributes = parseAttributes(node);
+    // 解析节点内容
     this.body = parseBody(node);
   }
 
@@ -348,12 +356,17 @@ public class XNode {
   }
 
   private Properties parseAttributes(Node n) {
+    // 创建properties对象，用来存放节点属性
     Properties attributes = new Properties();
+    // 获得节点属性Map
     NamedNodeMap attributeNodes = n.getAttributes();
     if (attributeNodes != null) {
       for (int i = 0; i < attributeNodes.getLength(); i++) {
+        // 获得节点属性
         Node attribute = attributeNodes.item(i);
+        // 对节点的值，进行占位符解析
         String value = PropertyParser.parse(attribute.getNodeValue(), variables);
+        // 添加到properties中
         attributes.put(attribute.getNodeName(), value);
       }
     }
@@ -361,9 +374,12 @@ public class XNode {
   }
 
   private String parseBody(Node node) {
+    // 只有节点类型为CDATA、TEXT时，获取节点内容，这里会解析占位符
     String data = getBodyData(node);
     if (data == null) {
+      // 获得所有的子节点
       NodeList children = node.getChildNodes();
+      // 遍历，对每一个节点继续获得该节点的内容
       for (int i = 0; i < children.getLength(); i++) {
         Node child = children.item(i);
         data = getBodyData(child);
@@ -372,6 +388,7 @@ public class XNode {
         }
       }
     }
+    // 返回节点内容
     return data;
   }
 
@@ -379,6 +396,7 @@ public class XNode {
     if (child.getNodeType() == Node.CDATA_SECTION_NODE
         || child.getNodeType() == Node.TEXT_NODE) {
       String data = ((CharacterData) child).getData();
+      // 解析占位符
       data = PropertyParser.parse(data, variables);
       return data;
     }

@@ -232,7 +232,8 @@ public class XPathParser {
     if (node == null) {
       return null;
     }
-    // 创建xNode对象，放入variables（标签<properties>中定义的键值对）
+    // 创建xNode对象，传入variables（标签<properties>中定义的键值对）， 这里实际上包装了Node，注意XNode这个类是mybtis的类
+    // 在实例化过程中，就已经解析了节点的属性和节点的内容
     return new XNode(this, node, variables);
   }
 
