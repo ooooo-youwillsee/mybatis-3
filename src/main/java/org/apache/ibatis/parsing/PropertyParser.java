@@ -51,8 +51,11 @@ public class PropertyParser {
   }
 
   public static String parse(String string, Properties variables) {
+    // 根据properties属性来创建VariableTokenHandler
     VariableTokenHandler handler = new VariableTokenHandler(variables);
+    // 创建通用的tokenHander，并设置开头是'${',结尾是'}',
     GenericTokenParser parser = new GenericTokenParser("${", "}", handler);
+    // 调用parse()方法来解析字符串
     return parser.parse(string);
   }
 

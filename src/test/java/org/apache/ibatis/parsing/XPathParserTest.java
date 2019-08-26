@@ -30,12 +30,12 @@ import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
 import org.xml.sax.*;
 
-class XPathParserTest {
+public class XPathParserTest {
   private String resource = "resources/nodelet_test.xml";
 
   //InputStream Source
   @Test
-  void constructorWithInputStreamValidationVariablesEntityResolver() throws Exception {
+  public void constructorWithInputStreamValidationVariablesEntityResolver() throws Exception {
 
     try (InputStream inputStream = Resources.getResourceAsStream(resource)) {
       XPathParser parser = new XPathParser(inputStream, false, null, null);
