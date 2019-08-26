@@ -186,10 +186,17 @@ public class Reflector {
   }
 
   private void addSetMethods(Class<?> clazz) {
+    // conflictingSetters 用来存放冲突的方法， 可能子类和父类都存在该setter方法
     Map<String, List<Method>> conflictingSetters = new HashMap<>();
+    // 获得所有的方法
     Method[] methods = getClassMethods(clazz);
+    /*
+    * 对方法进行过滤，过滤条件 --> 参数类型个数为1，是setter方法（以set开头）
+    * PropertyNamer.methodToProperty() --> 获得属性名，例如 setAbc() --> abc
+    * */
     Arrays.stream(methods).filter(m -> m.getParameterTypes().length == 1 && PropertyNamer.isSetter(m.getName()))
       .forEach(m -> addMethodConflict(conflictingSetters, PropertyNamer.methodToProperty(m.getName()), m));
+    // 解析冲突的setter方法
     resolveSetterConflicts(conflictingSetters);
   }
 
@@ -203,24 +210,32 @@ public class Reflector {
   }
 
   private void resolveSetterConflicts(Map<String, List<Method>> conflictingSetters) {
+    // 遍历conflictingSetters
     for (String propName : conflictingSetters.keySet()) {
+      // 获得所有的setter方法
       List<Method> setters = conflictingSetters.get(propName);
+      // 在getTypes集合中获得指定的getter方法的返回值类型
       Class<?> getterType = getTypes.get(propName);
+      // 判断该属性的getter方法是否是AmbiguousMethodInvoker（不确定的getter方法）
       boolean isGetterAmbiguous = getMethods.get(propName) instanceof AmbiguousMethodInvoker;
       boolean isSetterAmbiguous = false;
       Method match = null;
+      // 遍历所有的setter
       for (Method setter : setters) {
+        // 如果没有不确定的getter方法，并且setter方法的参数类型是getter的返回值类型，说明找到了，
         if (!isGetterAmbiguous && setter.getParameterTypes()[0].equals(getterType)) {
           // should be the best match
           match = setter;
           break;
         }
         if (!isSetterAmbiguous) {
+          // 对每一个setter方法，进行比较，
           match = pickBetterSetter(match, setter, propName);
           isSetterAmbiguous = match == null;
         }
       }
       if (match != null) {
+        // 添加setter方法，就是创建Invoker对象，然后添加到setMethods集合和setTypes集合
         addSetMethod(propName, match);
       }
     }
