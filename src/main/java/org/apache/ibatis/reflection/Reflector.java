@@ -84,9 +84,9 @@ public class Reflector {
     addDefaultConstructor(clazz);
     // 添加getter方法
     addGetMethods(clazz);
-    // 添加setter方法
+    // 添加setter方法 ，大致过程和addGetMethods()方法一样
     addSetMethods(clazz);
-    // 添加field
+    // 添加field，利用反射方法来继续向setMethods和getMethods中添加元素
     addFields(clazz);
     // 从getMethods中获取可读属性名称集合
     readablePropertyNames = getMethods.keySet().toArray(new String[0]);
@@ -291,30 +291,40 @@ public class Reflector {
   }
 
   private void addFields(Class<?> clazz) {
+    // 获得所有声明的字段
     Field[] fields = clazz.getDeclaredFields();
+    // 遍历
     for (Field field : fields) {
+      // 如果setMethods中不存在该字段属性，就利用反射方法field.set()
       if (!setMethods.containsKey(field.getName())) {
         // issue #379 - removed the check for final because JDK 1.5 allows
         // modification of final fields through reflection (JSR-133). (JGB)
         // pr #16 - final static can only be set by the classloader
+        // 获得字段的修饰符
         int modifiers = field.getModifiers();
+        // 字段不是final修饰，也不是static修饰，就添加到field集合
         if (!(Modifier.isFinal(modifiers) && Modifier.isStatic(modifiers))) {
           addSetField(field);
         }
       }
+      // 如果getMethods中不存在该字段属性，就利用反射方法field.get()
       if (!getMethods.containsKey(field.getName())) {
         addGetField(field);
       }
     }
+    // 存在父类，就添加父类的field
     if (clazz.getSuperclass() != null) {
       addFields(clazz.getSuperclass());
     }
   }
 
   private void addSetField(Field field) {
+    // 是有效的属性名称，在这里添加到setMethods集合中是不会重复的，因为在上一个方法中已经判断了是否在setMethods中
     if (isValidPropertyName(field.getName())) {
+      // 添加到setMethods集合中，通过创建SetFieldInvoker对象，本质上就是利用反射feild.set()
       setMethods.put(field.getName(), new SetFieldInvoker(field));
       Type fieldType = TypeParameterResolver.resolveFieldType(field, type);
+      // 添加到setTypes中， typeToClass()方法会处理fieldType的类型，可能是泛型、数组
       setTypes.put(field.getName(), typeToClass(fieldType));
     }
   }
