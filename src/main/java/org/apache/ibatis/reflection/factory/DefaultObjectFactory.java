@@ -42,6 +42,7 @@ public class DefaultObjectFactory implements ObjectFactory, Serializable {
 
   @Override
   public <T> T create(Class<T> type) {
+    // 无参构造器创建对象
     return create(type, null, null);
   }
 
@@ -50,6 +51,7 @@ public class DefaultObjectFactory implements ObjectFactory, Serializable {
   public <T> T create(Class<T> type, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
     Class<?> classToCreate = resolveInterface(type);
     // we know types are assignable
+    // 根据参数列表，从指定类型中选择合适的构造器来创建对象
     return (T) instantiateClass(classToCreate, constructorArgTypes, constructorArgs);
   }
 
@@ -57,8 +59,10 @@ public class DefaultObjectFactory implements ObjectFactory, Serializable {
     try {
       Constructor<T> constructor;
       if (constructorArgTypes == null || constructorArgs == null) {
+        // 如果参数类型和参数都为null，获得class的无参构造器
         constructor = type.getDeclaredConstructor();
         try {
+          // 调用newInstance()来实例化
           return constructor.newInstance();
         } catch (IllegalAccessException e) {
           if (Reflector.canControlMemberAccessible()) {
@@ -69,8 +73,10 @@ public class DefaultObjectFactory implements ObjectFactory, Serializable {
           }
         }
       }
+      // 根据指定的参数类型来获取相应的构造器
       constructor = type.getDeclaredConstructor(constructorArgTypes.toArray(new Class[constructorArgTypes.size()]));
       try {
+        // 传入参数，调用newInstance()来实例化
         return constructor.newInstance(constructorArgs.toArray(new Object[constructorArgs.size()]));
       } catch (IllegalAccessException e) {
         if (Reflector.canControlMemberAccessible()) {
@@ -107,6 +113,7 @@ public class DefaultObjectFactory implements ObjectFactory, Serializable {
 
   @Override
   public <T> boolean isCollection(Class<T> type) {
+    // 是否是集合，处理Collection的接口
     return Collection.class.isAssignableFrom(type);
   }
 
