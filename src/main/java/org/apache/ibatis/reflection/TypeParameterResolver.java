@@ -89,16 +89,21 @@ public class TypeParameterResolver {
   }
 
   private static Type resolveGenericArrayType(GenericArrayType genericArrayType, Type srcType, Class<?> declaringClass) {
+    // 获得数组组件的类型 例如：String[]  --> String
     Type componentType = genericArrayType.getGenericComponentType();
     Type resolvedComponentType = null;
     if (componentType instanceof TypeVariable) {
+      // 解析 TypeVariable
       resolvedComponentType = resolveTypeVar((TypeVariable<?>) componentType, srcType, declaringClass);
     } else if (componentType instanceof GenericArrayType) {
+      // 解析 GenericArrayType
       resolvedComponentType = resolveGenericArrayType((GenericArrayType) componentType, srcType, declaringClass);
     } else if (componentType instanceof ParameterizedType) {
+      // 解析 ParameterizedType
       resolvedComponentType = resolveParameterizedType((ParameterizedType) componentType, srcType, declaringClass);
     }
     if (resolvedComponentType instanceof Class) {
+      // 解析完了，根据componentType来创建数组类型
       return Array.newInstance((Class<?>) resolvedComponentType, 0).getClass();
     } else {
       return new GenericArrayTypeImpl(resolvedComponentType);
@@ -106,20 +111,27 @@ public class TypeParameterResolver {
   }
 
   private static ParameterizedType resolveParameterizedType(ParameterizedType parameterizedType, Type srcType, Class<?> declaringClass) {
+    // 获得原生类型  例如：List<T>  --> List
     Class<?> rawType = (Class<?>) parameterizedType.getRawType();
+    // 获取实际运行的参数  例如 Map<k,V>  -->   [K,V]
     Type[] typeArgs = parameterizedType.getActualTypeArguments();
     Type[] args = new Type[typeArgs.length];
+    // 遍历
     for (int i = 0; i < typeArgs.length; i++) {
       if (typeArgs[i] instanceof TypeVariable) {
+        // 解析 TypeVariable
         args[i] = resolveTypeVar((TypeVariable<?>) typeArgs[i], srcType, declaringClass);
       } else if (typeArgs[i] instanceof ParameterizedType) {
+        // 解析 ParameterizedType
         args[i] = resolveParameterizedType((ParameterizedType) typeArgs[i], srcType, declaringClass);
       } else if (typeArgs[i] instanceof WildcardType) {
+        // 解析 WildcardType
         args[i] = resolveWildcardType((WildcardType) typeArgs[i], srcType, declaringClass);
       } else {
         args[i] = typeArgs[i];
       }
     }
+    // 解析结果封装为ParameterizedTypeImpl对象
     return new ParameterizedTypeImpl(rawType, null, args);
   }
 
