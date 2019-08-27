@@ -35,8 +35,16 @@ public class TypeParameterResolver {
    *         they will be resolved to the actual runtime {@link Type}s.
    */
   public static Type resolveFieldType(Field field, Type srcType) {
+    /*
+    * 参数field --> 要解析的field对象
+    * 参数srcType  --> field所在的类
+    * */
+
+    // 获得字段的声明类型
     Type fieldType = field.getGenericType();
+    // 获得字段的声明类
     Class<?> declaringClass = field.getDeclaringClass();
+    // 解析字段类型
     return resolveType(fieldType, srcType, declaringClass);
   }
 
@@ -66,12 +74,16 @@ public class TypeParameterResolver {
 
   private static Type resolveType(Type type, Type srcType, Class<?> declaringClass) {
     if (type instanceof TypeVariable) {
+      // 解析TypeVariable  List<T>  T就是类型变量，也就是声明变量是 T name 这种类型的
       return resolveTypeVar((TypeVariable<?>) type, srcType, declaringClass);
     } else if (type instanceof ParameterizedType) {
+      // 解析ParameterizedType --> 泛型 例如：Map<Integer,String>
       return resolveParameterizedType((ParameterizedType) type, srcType, declaringClass);
     } else if (type instanceof GenericArrayType) {
+      // 解析GenericArrayType --> 数组  例如：String[]
       return resolveGenericArrayType((GenericArrayType) type, srcType, declaringClass);
     } else {
+      // 这里默认就是class --> 类
       return type;
     }
   }
@@ -137,15 +149,20 @@ public class TypeParameterResolver {
     Type result;
     Class<?> clazz;
     if (srcType instanceof Class) {
+      // class类型
       clazz = (Class<?>) srcType;
     } else if (srcType instanceof ParameterizedType) {
+      // 泛型
       ParameterizedType parameterizedType = (ParameterizedType) srcType;
+      // 获得泛型的原生类型 例如： List<String>  ---> List
       clazz = (Class<?>) parameterizedType.getRawType();
     } else {
       throw new IllegalArgumentException("The 2nd arg must be Class or ParameterizedType, but was: " + srcType.getClass());
     }
 
+    //  clazz与declaringClass相等，说明是在同一个类
     if (clazz == declaringClass) {
+      // 获得上界
       Type[] bounds = typeVar.getBounds();
       if (bounds.length > 0) {
         return bounds[0];
@@ -153,43 +170,57 @@ public class TypeParameterResolver {
       return Object.class;
     }
 
+    // 获得父类
     Type superclass = clazz.getGenericSuperclass();
+    // 扫描父类
     result = scanSuperTypes(typeVar, srcType, declaringClass, clazz, superclass);
     if (result != null) {
       return result;
     }
 
+    // 获得该类的所有接口
     Type[] superInterfaces = clazz.getGenericInterfaces();
+    // 遍历每一个接口，扫描接口
     for (Type superInterface : superInterfaces) {
       result = scanSuperTypes(typeVar, srcType, declaringClass, clazz, superInterface);
       if (result != null) {
         return result;
       }
     }
+    // 如果没有找到类型，默认返回Object类型
     return Object.class;
   }
 
   private static Type scanSuperTypes(TypeVariable<?> typeVar, Type srcType, Class<?> declaringClass, Class<?> clazz, Type superclass) {
+    // 父类也是泛型
     if (superclass instanceof ParameterizedType) {
       ParameterizedType parentAsType = (ParameterizedType) superclass;
+      // 获得父类的原生类型
       Class<?> parentAsClass = (Class<?>) parentAsType.getRawType();
+      // 获得父类的类型参数 List<A,B>  --> [A,B]
       TypeVariable<?>[] parentTypeVars = parentAsClass.getTypeParameters();
       if (srcType instanceof ParameterizedType) {
         parentAsType = translateParentTypeVars((ParameterizedType) srcType, clazz, parentAsType);
       }
+      // declaringClass和parentAsClass相等，说明找到类型所属的类
       if (declaringClass == parentAsClass) {
+        // 遍历
         for (int i = 0; i < parentTypeVars.length; i++) {
+          // 相等，获得泛型实际运行的参数  例如声明了 T name 这个字段 ，这里就会获取T真正的类型
           if (typeVar == parentTypeVars[i]) {
             return parentAsType.getActualTypeArguments()[i];
           }
         }
       }
+      // declaringClass还是parentAsClass的父类，说明还要往上一层的类中查找该declaringClass
       if (declaringClass.isAssignableFrom(parentAsClass)) {
         return resolveTypeVar(typeVar, parentAsType, declaringClass);
       }
+    //  父类是class， 并且declaringClass是superclass的父类，继续向上一层的类中查找declaringClass
     } else if (superclass instanceof Class && declaringClass.isAssignableFrom((Class<?>) superclass)) {
       return resolveTypeVar(typeVar, superclass, declaringClass);
     }
+    // 没有找到，返回null
     return null;
   }
 

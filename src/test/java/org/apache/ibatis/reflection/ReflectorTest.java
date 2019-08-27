@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 import static com.googlecode.catchexception.apis.BDDCatchException.*;
 import static org.assertj.core.api.BDDAssertions.then;
 
-class ReflectorTest {
+public class ReflectorTest {
 
   @Test
   void testGetSetterType() {
@@ -76,21 +76,21 @@ class ReflectorTest {
   }
 
   @Test
-  void shouldResolveSetterParam() {
+  public void shouldResolveSetterParam() {
     ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
     Reflector reflector = reflectorFactory.findForClass(Child.class);
     assertEquals(String.class, reflector.getSetterType("id"));
   }
 
   @Test
-  void shouldResolveParameterizedSetterParam() {
+  public void shouldResolveParameterizedSetterParam() {
     ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
     Reflector reflector = reflectorFactory.findForClass(Child.class);
     assertEquals(List.class, reflector.getSetterType("list"));
   }
 
   @Test
-  void shouldResolveArraySetterParam() {
+  public void shouldResolveArraySetterParam() {
     ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
     Reflector reflector = reflectorFactory.findForClass(Child.class);
     Class<?> clazz = reflector.getSetterType("array");
