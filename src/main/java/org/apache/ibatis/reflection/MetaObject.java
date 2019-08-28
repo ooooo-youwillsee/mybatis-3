@@ -32,31 +32,43 @@ import org.apache.ibatis.reflection.wrapper.ObjectWrapperFactory;
  */
 public class MetaObject {
 
+  // 原始javaBean对象
   private final Object originalObject;
+  // ObjectWrapper对象 --> beanWrapper
   private final ObjectWrapper objectWrapper;
+  // objectFactory对象 --> 提供了实例化的create()方法和setProperties()
   private final ObjectFactory objectFactory;
+  // 默认是DefaultObjectWrapperFactory对象，可以在mybatis-config.xml文件中设置自定义的
   private final ObjectWrapperFactory objectWrapperFactory;
+  // ReflectorFactory对象， --> 可以通过调用findForClass()来返回对应的ReFlector对象
   private final ReflectorFactory reflectorFactory;
 
   private MetaObject(Object object, ObjectFactory objectFactory, ObjectWrapperFactory objectWrapperFactory, ReflectorFactory reflectorFactory) {
+    // 设置初始化参数
     this.originalObject = object;
     this.objectFactory = objectFactory;
     this.objectWrapperFactory = objectWrapperFactory;
     this.reflectorFactory = reflectorFactory;
 
     if (object instanceof ObjectWrapper) {
+      // object已经是ObjectWrapper，直接设置ObjectWrapper
       this.objectWrapper = (ObjectWrapper) object;
     } else if (objectWrapperFactory.hasWrapperFor(object)) {
+      // 这个是允许用户在mybatis-config.xml中配置ObjectWrapperFactory类
       this.objectWrapper = objectWrapperFactory.getWrapperFor(this, object);
     } else if (object instanceof Map) {
+      // 如果Object是Map实例，使用new MapWrapper()
       this.objectWrapper = new MapWrapper(this, (Map) object);
     } else if (object instanceof Collection) {
+      // 使用collectionWrapper来创建
       this.objectWrapper = new CollectionWrapper(this, (Collection) object);
     } else {
+      // 默认都是使用BeanWrapper
       this.objectWrapper = new BeanWrapper(this, object);
     }
   }
 
+  // MetaObject的构造方法是私有的，所以只能通过这个forObject()方法来创建metaObject对象
   public static MetaObject forObject(Object object, ObjectFactory objectFactory, ObjectWrapperFactory objectWrapperFactory, ReflectorFactory reflectorFactory) {
     if (object == null) {
       return SystemMetaObject.NULL_META_OBJECT;
@@ -116,6 +128,7 @@ public class MetaObject {
       if (metaValue == SystemMetaObject.NULL_META_OBJECT) {
         return null;
       } else {
+        // 递归调用解析子表达式
         return metaValue.getValue(prop.getChildren());
       }
     } else {

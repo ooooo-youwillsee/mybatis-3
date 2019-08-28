@@ -24,6 +24,14 @@ import org.apache.ibatis.reflection.property.PropertyTokenizer;
 
 /**
  * @author Clinton Begin
+ *
+ * 实现ObjectWrapper接口的抽象类，其中封装了MetaObject对象，提供了三个常用的子类的方法
+ *
+ * @see BaseWrapper#resolveCollection(org.apache.ibatis.reflection.property.PropertyTokenizer, java.lang.Object)
+ * @see BaseWrapper#getCollectionValue(org.apache.ibatis.reflection.property.PropertyTokenizer, java.lang.Object)
+ * @see BaseWrapper#setCollectionValue(org.apache.ibatis.reflection.property.PropertyTokenizer, java.lang.Object, java.lang.Object)
+ *
+ * 上面这三个方法，都是内部调用metaObject的相应方法
  */
 public abstract class BaseWrapper implements ObjectWrapper {
 
@@ -42,10 +50,13 @@ public abstract class BaseWrapper implements ObjectWrapper {
     }
   }
 
+  // 获得集合的值
   protected Object getCollectionValue(PropertyTokenizer prop, Object collection) {
     if (collection instanceof Map) {
+      // 如果是map，prop.getIndex()  --> map集合的key
       return ((Map) collection).get(prop.getIndex());
     } else {
+      // 从索引的中获取值，处理各种数组的情况
       int i = Integer.parseInt(prop.getIndex());
       if (collection instanceof List) {
         return ((List) collection).get(i);
@@ -73,6 +84,7 @@ public abstract class BaseWrapper implements ObjectWrapper {
     }
   }
 
+  // 设置集合的值， 这个方法和getCollectionValue()的思路一样
   protected void setCollectionValue(PropertyTokenizer prop, Object collection, Object value) {
     if (collection instanceof Map) {
       ((Map) collection).put(prop.getIndex(), value);
