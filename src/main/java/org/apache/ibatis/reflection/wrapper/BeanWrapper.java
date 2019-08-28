@@ -127,7 +127,9 @@ public class BeanWrapper extends BaseWrapper {
   @Override
   public boolean hasGetter(String name) {
     PropertyTokenizer prop = new PropertyTokenizer(name);
+    // 有子表达式
     if (prop.hasNext()) {
+      // indexedName --> orders[0]  判断这个属性有getter方法
       if (metaClass.hasGetter(prop.getIndexedName())) {
         MetaObject metaValue = metaObject.metaObjectForProperty(prop.getIndexedName());
         if (metaValue == SystemMetaObject.NULL_META_OBJECT) {

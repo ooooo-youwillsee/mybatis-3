@@ -28,6 +28,9 @@ import org.apache.ibatis.reflection.property.PropertyTokenizer;
 
 /**
  * @author Clinton Begin
+ *
+ * 这个类持通过Reflector 和 PropertyTokenizer 来实现对复杂的属性表达式解析
+ * 所以主要分析findProperty()方法
  */
 public class MetaClass {
 
@@ -35,10 +38,17 @@ public class MetaClass {
   private final Reflector reflector;
 
   private MetaClass(Class<?> type, ReflectorFactory reflectorFactory) {
+    // 通过构造函数传入type，reflectorFactory，滴啊用findForClass查找type的反射信息，封装在reflector对象中
     this.reflectorFactory = reflectorFactory;
     this.reflector = reflectorFactory.findForClass(type);
   }
 
+  /**
+   * 使用静态方法来创建MetaClass对象
+   * @param type
+   * @param reflectorFactory
+   * @return
+   */
   public static MetaClass forClass(Class<?> type, ReflectorFactory reflectorFactory) {
     return new MetaClass(type, reflectorFactory);
   }
@@ -48,6 +58,11 @@ public class MetaClass {
     return MetaClass.forClass(propType, reflectorFactory);
   }
 
+  /**
+   * 找到属性
+   * @param name
+   * @return
+   */
   public String findProperty(String name) {
     StringBuilder prop = buildProperty(name, new StringBuilder());
     return prop.length() > 0 ? prop.toString() : null;
@@ -168,18 +183,25 @@ public class MetaClass {
   }
 
   private StringBuilder buildProperty(String name, StringBuilder builder) {
+    // 在创建PropertyTokenizer对象时，构造函数里面就会获得要解析的name、index、children（子表达式）
     PropertyTokenizer prop = new PropertyTokenizer(name);
+    // prop实现了Iterator接口，可以用next()来解析复杂的表达式，而调用next()来确定是否还有子表达式
     if (prop.hasNext()) {
+      // 查找name属性，propertyName就是class中的属性名
       String propertyName = reflector.findPropertyName(prop.getName());
       if (propertyName != null) {
         builder.append(propertyName);
         builder.append(".");
+        // 为该属性创建MetaClass对象，就是为该属性的getter返回值类型创建MetaClass对象
         MetaClass metaProp = metaClassForProperty(propertyName);
+        // 递归调用，获取子表达式，放入builder中
         metaProp.buildProperty(prop.getChildren(), builder);
       }
     } else {
+      // 没有子表达式，直接查找name
       String propertyName = reflector.findPropertyName(name);
       if (propertyName != null) {
+        // 不为空，添加
         builder.append(propertyName);
       }
     }
