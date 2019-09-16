@@ -34,12 +34,17 @@ import org.apache.ibatis.io.Resources;
 
 /**
  * @author Clinton Begin
+ *
+ * 类型别名注册和管理的类型
+ *
  */
 public class TypeAliasRegistry {
 
   private final Map<String, Class<?>> typeAliases = new HashMap<>();
 
+  // 构造函数注册别名
   public TypeAliasRegistry() {
+    // String 的别名为string
     registerAlias("string", String.class);
 
     registerAlias("byte", Byte.class);
@@ -125,14 +130,21 @@ public class TypeAliasRegistry {
     registerAliases(packageName, Object.class);
   }
 
+  /**
+   * 对指定的包，进行别名注册
+   * @param packageName
+   * @param superType
+   */
   public void registerAliases(String packageName, Class<?> superType) {
     ResolverUtil<Class<?>> resolverUtil = new ResolverUtil<>();
     resolverUtil.find(new ResolverUtil.IsA(superType), packageName);
+    // 找到superType类型的子类 例如：superType为Object.class
     Set<Class<? extends Class<?>>> typeSet = resolverUtil.getClasses();
     for (Class<?> type : typeSet) {
       // Ignore inner classes and interfaces (including package-info.java)
       // Skip also inner classes. See issue #6
       if (!type.isAnonymousClass() && !type.isInterface() && !type.isMemberClass()) {
+        // 注册别名
         registerAlias(type);
       }
     }
@@ -140,6 +152,7 @@ public class TypeAliasRegistry {
 
   public void registerAlias(Class<?> type) {
     String alias = type.getSimpleName();
+    // 找到Alias注解的，注册别名
     Alias aliasAnnotation = type.getAnnotation(Alias.class);
     if (aliasAnnotation != null) {
       alias = aliasAnnotation.value();
@@ -149,13 +162,17 @@ public class TypeAliasRegistry {
 
   public void registerAlias(String alias, Class<?> value) {
     if (alias == null) {
+      // 如果alias不为空，抛出异常
       throw new TypeException("The parameter alias cannot be null");
     }
     // issue #748
+    // 别名转小写
     String key = alias.toLowerCase(Locale.ENGLISH);
+    // 检查
     if (typeAliases.containsKey(key) && typeAliases.get(key) != null && !typeAliases.get(key).equals(value)) {
       throw new TypeException("The alias '" + alias + "' is already mapped to the value '" + typeAliases.get(key).getName() + "'.");
     }
+    // 添加到typeAliases集合中
     typeAliases.put(key, value);
   }
 
