@@ -22,12 +22,17 @@ import java.sql.SQLException;
 
 /**
  * @author Clinton Begin
+ *
+ * typeHandler 以IntegerTypeHandler为例
+ *
+ * 对于重载的getNullableResult()方法，是在父类BaseTypeHandler中声明的
  */
 public class IntegerTypeHandler extends BaseTypeHandler<Integer> {
 
   @Override
   public void setNonNullParameter(PreparedStatement ps, int i, Integer parameter, JdbcType jdbcType)
       throws SQLException {
+    // 调用PreparedStatement对象对应的方法
     ps.setInt(i, parameter);
   }
 

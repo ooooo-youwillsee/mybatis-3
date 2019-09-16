@@ -22,11 +22,16 @@ import java.sql.SQLException;
 
 /**
  * @author Clinton Begin
+ *
+ * mybatis中统一的类型处理器接口
  */
 public interface TypeHandler<T> {
 
+  // 在通过PreparedStatement为SQL语句绑定参数时，
   void setParameter(PreparedStatement ps, int i, T parameter, JdbcType jdbcType) throws SQLException;
 
+
+  // 从ResultSet中获取数据时会调用此方法，会将数据由 Java 类型转换成 JdbcType 类型
   /**
    * @param columnName Colunm name, when configuration <code>useColumnLabel</code> is <code>false</code>
    */
