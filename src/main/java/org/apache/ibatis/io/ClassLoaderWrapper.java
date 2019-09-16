@@ -22,10 +22,14 @@ import java.net.URL;
  * A class to wrap access to multiple class loaders making them work as one
  *
  * @author Clinton Begin
+ *
+ * classLoader的包装类
  */
 public class ClassLoaderWrapper {
 
+  // 应用默认的classLoader
   ClassLoader defaultClassLoader;
+  // 系统classLoader
   ClassLoader systemClassLoader;
 
   ClassLoaderWrapper() {
@@ -43,6 +47,7 @@ public class ClassLoaderWrapper {
    * @return the resource or null
    */
   public URL getResourceAsURL(String resource) {
+    // 获得所有的classLoader，
     return getResourceAsURL(resource, getClassLoaders(null));
   }
 
@@ -139,16 +144,19 @@ public class ClassLoaderWrapper {
 
     URL url;
 
+    // 遍历classLoader
     for (ClassLoader cl : classLoader) {
 
       if (null != cl) {
 
         // look for the resource as passed in...
+        // 查找资源
         url = cl.getResource(resource);
 
         // ...but some class loaders want this leading "/", so we'll add it
         // and try again if we didn't find the resource
         if (null == url) {
+          // 如果结果为空，添加前缀'/'，继续查找资源
           url = cl.getResource("/" + resource);
         }
 
@@ -202,11 +210,17 @@ public class ClassLoaderWrapper {
   }
 
   ClassLoader[] getClassLoaders(ClassLoader classLoader) {
+    // 这里指定了classLoader的使用顺序
     return new ClassLoader[]{
+        // 指定参数的classLoader
         classLoader,
+        // 默认的classLoader
         defaultClassLoader,
+        // 当前线程的classLoader
         Thread.currentThread().getContextClassLoader(),
+        // 当前类的classLoader
         getClass().getClassLoader(),
+        // 系统的classLoader
         systemClassLoader};
   }
 
