@@ -31,6 +31,8 @@ import org.apache.ibatis.reflection.ExceptionUtil;
  * @author Clinton Begin
  * @author Eduardo Macarron
  *
+ * connection对象的日志对象， 实现了InvocationHandler，jdk动态代理
+ *
  */
 public final class ConnectionLogger extends BaseJdbcLogger implements InvocationHandler {
 
@@ -45,24 +47,30 @@ public final class ConnectionLogger extends BaseJdbcLogger implements Invocation
   public Object invoke(Object proxy, Method method, Object[] params)
       throws Throwable {
     try {
+      // method是Object的方法
       if (Object.class.equals(method.getDeclaringClass())) {
         return method.invoke(this, params);
       }
       if ("prepareStatement".equals(method.getName())) {
+        // 方法是prepareStatement
         if (isDebugEnabled()) {
           debug(" Preparing: " + removeBreakingWhitespace((String) params[0]), true);
         }
+        // 生成preparedStatement代理对象
         PreparedStatement stmt = (PreparedStatement) method.invoke(connection, params);
         stmt = PreparedStatementLogger.newInstance(stmt, statementLog, queryStack);
         return stmt;
       } else if ("prepareCall".equals(method.getName())) {
+        // 方法是prepareCall
         if (isDebugEnabled()) {
           debug(" Preparing: " + removeBreakingWhitespace((String) params[0]), true);
         }
+        // 生成preparedStatment代理对象
         PreparedStatement stmt = (PreparedStatement) method.invoke(connection, params);
         stmt = PreparedStatementLogger.newInstance(stmt, statementLog, queryStack);
         return stmt;
       } else if ("createStatement".equals(method.getName())) {
+        // 方法是createStatement，生成statement代理对象
         Statement stmt = (Statement) method.invoke(connection, params);
         stmt = StatementLogger.newInstance(stmt, statementLog, queryStack);
         return stmt;
@@ -81,6 +89,7 @@ public final class ConnectionLogger extends BaseJdbcLogger implements Invocation
    * @return - the connection with logging
    */
   public static Connection newInstance(Connection conn, Log statementLog, int queryStack) {
+    // 使用newInstance来创建代理对象
     InvocationHandler handler = new ConnectionLogger(conn, statementLog, queryStack);
     ClassLoader cl = Connection.class.getClassLoader();
     return (Connection) Proxy.newProxyInstance(cl, new Class[]{Connection.class}, handler);

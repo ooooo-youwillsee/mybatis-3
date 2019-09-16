@@ -44,15 +44,18 @@ public final class PreparedStatementLogger extends BaseJdbcLogger implements Inv
   @Override
   public Object invoke(Object proxy, Method method, Object[] params) throws Throwable {
     try {
+      // 如果method属于Object类，不做任何处理
       if (Object.class.equals(method.getDeclaringClass())) {
         return method.invoke(this, params);
       }
+      // 对EXECUTE_METHODS中方法进行处理
       if (EXECUTE_METHODS.contains(method.getName())) {
         if (isDebugEnabled()) {
           debug("Parameters: " + getParameterValueString(), true);
         }
         clearColumnInfo();
         if ("executeQuery".equals(method.getName())) {
+          // 创建resultSet代理对象
           ResultSet rs = (ResultSet) method.invoke(statement, params);
           return rs == null ? null : ResultSetLogger.newInstance(rs, statementLog, queryStack);
         } else {
@@ -66,6 +69,7 @@ public final class PreparedStatementLogger extends BaseJdbcLogger implements Inv
         }
         return method.invoke(statement, params);
       } else if ("getResultSet".equals(method.getName())) {
+        // 创建resultSet代理对象
         ResultSet rs = (ResultSet) method.invoke(statement, params);
         return rs == null ? null : ResultSetLogger.newInstance(rs, statementLog, queryStack);
       } else if ("getUpdateCount".equals(method.getName())) {
@@ -91,6 +95,7 @@ public final class PreparedStatementLogger extends BaseJdbcLogger implements Inv
    * @return - the proxy
    */
   public static PreparedStatement newInstance(PreparedStatement stmt, Log statementLog, int queryStack) {
+    // 和connectionLogger类一样，调用newInstance来生成代理对象
     InvocationHandler handler = new PreparedStatementLogger(stmt, statementLog, queryStack);
     ClassLoader cl = PreparedStatement.class.getClassLoader();
     return (PreparedStatement) Proxy.newProxyInstance(cl, new Class[]{PreparedStatement.class, CallableStatement.class}, handler);

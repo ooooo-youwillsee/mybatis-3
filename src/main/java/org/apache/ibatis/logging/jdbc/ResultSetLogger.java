@@ -63,9 +63,11 @@ public final class ResultSetLogger extends BaseJdbcLogger implements InvocationH
   @Override
   public Object invoke(Object proxy, Method method, Object[] params) throws Throwable {
     try {
+      // 对Object类中方法不做任何处理
       if (Object.class.equals(method.getDeclaringClass())) {
         return method.invoke(this, params);
       }
+      // 执行目标方法
       Object o = method.invoke(rs, params);
       if ("next".equals(method.getName())) {
         if ((Boolean) o) {
@@ -75,8 +77,10 @@ public final class ResultSetLogger extends BaseJdbcLogger implements InvocationH
             final int columnCount = rsmd.getColumnCount();
             if (first) {
               first = false;
+              // 打印列的头
               printColumnHeaders(rsmd, columnCount);
             }
+            // 输入该行的记录，这里会对BLOB类型过滤
             printColumnValues(columnCount);
           }
         } else {
@@ -125,6 +129,7 @@ public final class ResultSetLogger extends BaseJdbcLogger implements InvocationH
    * @return - the ResultSet with logging
    */
   public static ResultSet newInstance(ResultSet rs, Log statementLog, int queryStack) {
+    // 和connectionLogger一样，调用newInstance方法来生成代理对象
     InvocationHandler handler = new ResultSetLogger(rs, statementLog, queryStack);
     ClassLoader cl = ResultSet.class.getClassLoader();
     return (ResultSet) Proxy.newProxyInstance(cl, new Class[]{ResultSet.class}, handler);

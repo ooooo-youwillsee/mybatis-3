@@ -20,6 +20,9 @@ import java.lang.reflect.Constructor;
 /**
  * @author Clinton Begin
  * @author Eduardo Macarron
+ *
+ * 统一的日志工厂，从LogFactory中获取log对象，此处使用了适配器模式
+ *
  */
 public final class LogFactory {
 
@@ -31,9 +34,12 @@ public final class LogFactory {
   private static Constructor<? extends Log> logConstructor;
 
   static {
+    // 尝试加载slf4j, 这里执行的是 Runnable#run()方法
     tryImplementation(LogFactory::useSlf4jLogging);
     tryImplementation(LogFactory::useCommonsLogging);
+    // 尝试加载log4j2
     tryImplementation(LogFactory::useLog4J2Logging);
+    // 尝试加载log4j
     tryImplementation(LogFactory::useLog4JLogging);
     tryImplementation(LogFactory::useJdkLogging);
     tryImplementation(LogFactory::useNoLogging);
@@ -99,11 +105,14 @@ public final class LogFactory {
 
   private static void setImplementation(Class<? extends Log> implClass) {
     try {
+      // 获得参数为String.class的构造函数
       Constructor<? extends Log> candidate = implClass.getConstructor(String.class);
+      // 创建log实例，
       Log log = candidate.newInstance(LogFactory.class.getName());
       if (log.isDebugEnabled()) {
         log.debug("Logging initialized using '" + implClass + "' adapter.");
       }
+      // 表明log构造器
       logConstructor = candidate;
     } catch (Throwable t) {
       throw new LogException("Error setting Log implementation.  Cause: " + t, t);
