@@ -55,6 +55,12 @@ import org.apache.ibatis.logging.LogFactory;
  * </pre>
  *
  * @author Tim Fennell
+ *
+ *  根据指定条件查找指定包下的类,其中使用的条件由Test接口表示
+ *  Mybatis中有两个Test接口的类
+ *      IsA --> 是否继承了指定的类或者接口
+ *      AnnotatedWith  --> 是否类添加某一个注解
+ *
  */
 public class ResolverUtil<T> {
   /*
@@ -89,6 +95,7 @@ public class ResolverUtil<T> {
     /** Returns true if type is assignable to the parent type supplied in the constructor. */
     @Override
     public boolean matches(Class<?> type) {
+      // type是否为parent的子类
       return type != null && parent.isAssignableFrom(type);
     }
 
@@ -113,6 +120,7 @@ public class ResolverUtil<T> {
     /** Returns true if the type is annotated with the class provided to the constructor. */
     @Override
     public boolean matches(Class<?> type) {
+      // type是否有annotation注解
       return type != null && type.isAnnotationPresent(annotation);
     }
 
@@ -171,6 +179,7 @@ public class ResolverUtil<T> {
    * @param packageNames one or more package names to scan (including subpackages) for classes
    */
   public ResolverUtil<T> findImplementations(Class<?> parent, String... packageNames) {
+    // 在packageNames 中查找继承了parent的子类
     if (packageNames == null) {
       return this;
     }
@@ -217,9 +226,11 @@ public class ResolverUtil<T> {
     String path = getPackagePath(packageName);
 
     try {
+      // 通过 VFS#list()查找 packageName 包下 的所有资源
       List<String> children = VFS.getInstance().list(path);
       for (String child : children) {
         if (child.endsWith(".class")) {
+          // 如果匹配则添加
           addIfMatching(test, child);
         }
       }
@@ -250,7 +261,9 @@ public class ResolverUtil<T> {
   @SuppressWarnings("unchecked")
   protected void addIfMatching(Test test, String fqn) {
     try {
+      // 例如 fqn 是 com/ooooo/Test.class
       String externalName = fqn.substring(0, fqn.indexOf('.')).replace('/', '.');
+      // 使用当前线程的classLoader
       ClassLoader loader = getClassLoader();
       if (log.isDebugEnabled()) {
         log.debug("Checking to see if class " + externalName + " matches criteria [" + test + "]");
