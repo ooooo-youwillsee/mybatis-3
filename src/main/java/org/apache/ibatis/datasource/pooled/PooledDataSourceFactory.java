@@ -19,10 +19,13 @@ import org.apache.ibatis.datasource.unpooled.UnpooledDataSourceFactory;
 
 /**
  * @author Clinton Begin
+ *
+ * 继承于UnpooledDataSourceFactory ，只是DataSource为PooledDataSource
  */
 public class PooledDataSourceFactory extends UnpooledDataSourceFactory {
 
   public PooledDataSourceFactory() {
+    // 初始化为UnpooledDataSource对象
     this.dataSource = new PooledDataSource();
   }
 
