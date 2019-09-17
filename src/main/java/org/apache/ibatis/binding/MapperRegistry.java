@@ -30,10 +30,15 @@ import org.apache.ibatis.session.SqlSession;
  * @author Clinton Begin
  * @author Eduardo Macarron
  * @author Lasse Voss
+ *
+ * Mapper接口及其对应的代理对象工厂的注册中心
  */
 public class MapperRegistry {
 
+  // mybatis中全局的配置对象
   private final Configuration config;
+
+  // 记录mapper接口和mapperProxyFactory对应关系的Map
   private final Map<Class<?>, MapperProxyFactory<?>> knownMappers = new HashMap<>();
 
   public MapperRegistry(Configuration config) {
@@ -42,11 +47,14 @@ public class MapperRegistry {
 
   @SuppressWarnings("unchecked")
   public <T> T getMapper(Class<T> type, SqlSession sqlSession) {
+    // 获得对应的MapperProxyFactory对象
     final MapperProxyFactory<T> mapperProxyFactory = (MapperProxyFactory<T>) knownMappers.get(type);
     if (mapperProxyFactory == null) {
+      // 不存在ProxyFactory，抛出异常
       throw new BindingException("Type " + type + " is not known to the MapperRegistry.");
     }
     try {
+      // 调用newInstance创建Mapper对象
       return mapperProxyFactory.newInstance(sqlSession);
     } catch (Exception e) {
       throw new BindingException("Error getting mapper instance. Cause: " + e, e);
@@ -59,20 +67,26 @@ public class MapperRegistry {
 
   public <T> void addMapper(Class<T> type) {
     if (type.isInterface()) {
+      // 判断type是否为接口
       if (hasMapper(type)) {
+        // 判断是否加载过这个type，如果有，则抛出异常
         throw new BindingException("Type " + type + " is already known to the MapperRegistry.");
       }
       boolean loadCompleted = false;
       try {
+        // 添加到knownMappers， key为Mapper接口，value为MapperProxyFactory
         knownMappers.put(type, new MapperProxyFactory<>(type));
         // It's important that the type is added before the parser is run
         // otherwise the binding may automatically be attempted by the
         // mapper parser. If the type is already known, it won't try.
+
+        // Mapper注解解析类
         MapperAnnotationBuilder parser = new MapperAnnotationBuilder(config, type);
         parser.parse();
         loadCompleted = true;
       } finally {
         if (!loadCompleted) {
+          // 发生异常，没有加载，则移除type
           knownMappers.remove(type);
         }
       }

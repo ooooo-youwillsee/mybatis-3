@@ -38,8 +38,12 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
       | MethodHandles.Lookup.PACKAGE | MethodHandles.Lookup.PUBLIC;
   private static final Constructor<Lookup> lookupConstructor;
   private static final Method privateLookupInMethod;
+
+  // mapper关联的sqlSession对象
   private final SqlSession sqlSession;
+  // mapper接口
   private final Class<T> mapperInterface;
+  // mapper接口中的method缓存Map, MapperMethod可以在多个代理对象中共享
   private final Map<Method, MapperMethod> methodCache;
 
   public MapperProxy(SqlSession sqlSession, Class<T> mapperInterface, Map<Method, MapperMethod> methodCache) {
@@ -78,8 +82,10 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     try {
       if (Object.class.equals(method.getDeclaringClass())) {
+        // method属于Object类中的，不做处理
         return method.invoke(this, args);
       } else if (method.isDefault()) {
+        // method是default类型的， java8支持
         if (privateLookupInMethod == null) {
           return invokeDefaultMethodJava8(proxy, method, args);
         } else {
@@ -89,7 +95,9 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
     } catch (Throwable t) {
       throw ExceptionUtil.unwrapThrowable(t);
     }
+    // 从缓存中获取MapperMethod方法
     final MapperMethod mapperMethod = cachedMapperMethod(method);
+    // 执行MapperMethod
     return mapperMethod.execute(sqlSession, args);
   }
 
