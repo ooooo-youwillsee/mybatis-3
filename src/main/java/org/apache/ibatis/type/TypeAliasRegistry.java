@@ -164,7 +164,7 @@ public class TypeAliasRegistry {
 
   public void registerAlias(String alias, Class<?> value) {
     if (alias == null) {
-      // 如果alias不为空，抛出异常
+      // 如果alias为空，抛出异常
       throw new TypeException("The parameter alias cannot be null");
     }
     // issue #748

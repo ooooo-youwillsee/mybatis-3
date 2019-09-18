@@ -393,7 +393,7 @@ public final class TypeHandlerRegistry {
         // 遍历注册，这里添加了jdbcType的typeHandler
         register(javaType, handledJdbcType, typeHandler);
       }
-      // 是否处理null的jdbcType，如果处理，则注册改typeHandler
+      // 是否处理null的jdbcType，如果处理，则注册该typeHandler
       if (mappedJdbcTypes.includeNullJdbcType()) {
         register(javaType, null, typeHandler);
       }
