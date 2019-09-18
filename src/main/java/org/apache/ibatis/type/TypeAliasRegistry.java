@@ -113,8 +113,10 @@ public class TypeAliasRegistry {
         return null;
       }
       // issue #748
+      // 将string转换为小写
       String key = string.toLowerCase(Locale.ENGLISH);
       Class<T> value;
+      // 在typeAliasesMap中查找，若没有调用Class#forName()来创建
       if (typeAliases.containsKey(key)) {
         value = (Class<T>) typeAliases.get(key);
       } else {

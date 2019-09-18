@@ -30,6 +30,8 @@ import org.apache.ibatis.io.Resources;
 
 /**
  * @author Clinton Begin
+ *
+ * 序列化缓存， putObject会将value序列化存入缓存中
  */
 public class SerializedCache implements Cache {
 

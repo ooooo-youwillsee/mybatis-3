@@ -30,15 +30,26 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
 
 /**
  * @author Clinton Begin
+ *
+ * 建造者模式的基础类
  */
 public abstract class BaseBuilder {
+
+  // mybatia核心configuration
   protected final Configuration configuration;
+
+  // 在 mybatis-config.xml 配置文件中可以使用<typeAliases>标签定义别名
   protected final TypeAliasRegistry typeAliasRegistry;
+
+  // 在 mybatis-config.xml 配置文件中可以使用<typeHandlers>标签添加自定义TypeHandler 荡
   protected final TypeHandlerRegistry typeHandlerRegistry;
 
+  // 构造函数中初始化configuration、typeAliasRegistry、typeHandlerRegistry
   public BaseBuilder(Configuration configuration) {
     this.configuration = configuration;
+    // mybatis-config.xml 定义的
     this.typeAliasRegistry = this.configuration.getTypeAliasRegistry();
+    // mybatis-config.xml 定义的
     this.typeHandlerRegistry = this.configuration.getTypeHandlerRegistry();
   }
 
@@ -132,19 +143,23 @@ public abstract class BaseBuilder {
     return resolveTypeHandler(javaType, typeHandlerType);
   }
 
+  // 解析typeHandler，借助typeHandlerRegistry
   protected TypeHandler<?> resolveTypeHandler(Class<?> javaType, Class<? extends TypeHandler<?>> typeHandlerType) {
     if (typeHandlerType == null) {
       return null;
     }
     // javaType ignored for injected handlers see issue #746 for full detail
+    // 根据class来获取typeHandler对象
     TypeHandler<?> handler = typeHandlerRegistry.getMappingTypeHandler(typeHandlerType);
     if (handler == null) {
       // not in registry, create a new one
+      // handler为null，则调用构造器来newInstance一个handler
       handler = typeHandlerRegistry.getInstance(javaType, typeHandlerType);
     }
     return handler;
   }
 
+  // 解析别名，借助typeAliasRegistry
   protected <T> Class<? extends T> resolveAlias(String alias) {
     return typeAliasRegistry.resolveAlias(alias);
   }

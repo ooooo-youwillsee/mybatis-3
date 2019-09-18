@@ -32,11 +32,18 @@ import org.apache.ibatis.cache.CacheException;
  *
  * @author Eduardo Macarron
  *
+ *  阻塞缓存装饰器 --> 保证只有一个线程到数据库中查找对应key的数据
+ *
  */
 public class BlockingCache implements Cache {
 
+  // 阻塞超时时间
   private long timeout;
+
+  // 被装饰的底层cache对象
   private final Cache delegate;
+
+  // 每一个cache都有一个reentrantLock
   private final ConcurrentHashMap<Object, ReentrantLock> locks;
 
   public BlockingCache(Cache delegate) {
@@ -65,9 +72,12 @@ public class BlockingCache implements Cache {
 
   @Override
   public Object getObject(Object key) {
+    // 获得该key对应的lock
     acquireLock(key);
+    // 查询key缓存的数据
     Object value = delegate.getObject(key);
     if (value != null) {
+      // 缓存中有对应的key，就释放锁，否则继续持有锁
       releaseLock(key);
     }
     return value;
@@ -90,17 +100,21 @@ public class BlockingCache implements Cache {
   }
 
   private void acquireLock(Object key) {
+    // 获得reentrantLock锁对象
     Lock lock = getLockForKey(key);
     if (timeout > 0) {
       try {
+        // 尝试获取锁，如果获取失败，阻塞timeout时间
         boolean acquired = lock.tryLock(timeout, TimeUnit.MILLISECONDS);
         if (!acquired) {
+          // 如果超时，将抛出异常
           throw new CacheException("Couldn't get a lock in " + timeout + " for the key " +  key + " at the cache " + delegate.getId());
         }
       } catch (InterruptedException e) {
         throw new CacheException("Got interrupted while trying to acquire lock for key " + key, e);
       }
     } else {
+      // 获取锁，不带超时时间
       lock.lock();
     }
   }
@@ -108,6 +122,7 @@ public class BlockingCache implements Cache {
   private void releaseLock(Object key) {
     ReentrantLock lock = locks.get(key);
     if (lock.isHeldByCurrentThread()) {
+      // lock是否是当前线程持有的
       lock.unlock();
     }
   }

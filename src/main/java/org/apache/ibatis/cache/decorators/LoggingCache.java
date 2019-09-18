@@ -21,6 +21,9 @@ import org.apache.ibatis.logging.LogFactory;
 
 /**
  * @author Clinton Begin
+ *
+ * 日志cache
+ * 通过hit字段和requests来记录Cache中命中次数和访问次数
  */
 public class LoggingCache implements Cache {
 

@@ -49,6 +49,8 @@ import org.apache.ibatis.type.JdbcType;
 /**
  * @author Clinton Begin
  * @author Kazuki Shimizu
+ *
+ * 这个类用于解析
  */
 public class XMLConfigBuilder extends BaseBuilder {
 

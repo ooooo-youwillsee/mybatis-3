@@ -19,6 +19,8 @@ import org.apache.ibatis.cache.Cache;
 
 /**
  * @author Clinton Begin
+ *
+ * 实现方式， 在putObject、getObject方法上添加synchronized
  */
 public class SynchronizedCache implements Cache {
 

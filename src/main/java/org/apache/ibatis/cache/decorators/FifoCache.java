@@ -23,12 +23,17 @@ import org.apache.ibatis.cache.Cache;
 /**
  * FIFO (first in, first out) cache decorator.
  *
+ * 按照一定的规则来清理缓存，  先进先出
+ *
  * @author Clinton Begin
  */
 public class FifoCache implements Cache {
 
+  // 底层被装饰的cache对象
   private final Cache delegate;
+  // 队列
   private final Deque<Object> keyList;
+  // 缓存的上限
   private int size;
 
   public FifoCache(Cache delegate) {
@@ -53,7 +58,9 @@ public class FifoCache implements Cache {
 
   @Override
   public void putObject(Object key, Object value) {
+    // 检测并清理key
     cycleKeyList(key);
+    // 添加缓存
     delegate.putObject(key, value);
   }
 
@@ -74,9 +81,12 @@ public class FifoCache implements Cache {
   }
 
   private void cycleKeyList(Object key) {
+    // 添加到最后
     keyList.addLast(key);
     if (keyList.size() > size) {
+      // 大小超过缓存上限，删除第一项
       Object oldestKey = keyList.removeFirst();
+      // 删除对应的key
       delegate.removeObject(oldestKey);
     }
   }

@@ -27,11 +27,24 @@ import org.apache.ibatis.cache.Cache;
  * Thanks to Dr. Heinz Kabutz for his guidance here.
  *
  * @author Clinton Begin
+ *
+ * 软引用缓存
+ *
  */
 public class SoftCache implements Cache {
+
+  // 在SoftCache中，最近使用的一部分缓存项不会被GC回收，
+  // 这就是通过将其value添加到hardLinksToAvoidGarbageCollection集合中实现的(即有强引用指向其 value)
+  // hardLinksToAvoidGarbageCollection集合是 LinkedList<Object>类型
   private final Deque<Object> hardLinksToAvoidGarbageCollection;
+
+  // 引用队列，用于记录已经被GC回收的缓存项所对应的 SoftEntry 对象
   private final ReferenceQueue<Object> queueOfGarbageCollectedEntries;
+
+  // 底层被装饰的底层Cache对象
   private final Cache delegate;
+
+  // 强引用的个数256
   private int numberOfHardLinks;
 
   public SoftCache(Cache delegate) {
@@ -59,7 +72,9 @@ public class SoftCache implements Cache {
 
   @Override
   public void putObject(Object key, Object value) {
+    // 清除已被GC回收的缓存项
     removeGarbageCollectedItems();
+    // 添加缓存
     delegate.putObject(key, new SoftEntry(key, value, queueOfGarbageCollectedEntries));
   }
 
@@ -71,9 +86,11 @@ public class SoftCache implements Cache {
     if (softReference != null) {
       result = softReference.get();
       if (result == null) {
+        // 已经被GC回收，删除缓存
         delegate.removeObject(key);
       } else {
         // See #586 (and #335) modifications need more than a read lock
+        // 没有被GC回收，添加到强引用中
         synchronized (hardLinksToAvoidGarbageCollection) {
           hardLinksToAvoidGarbageCollection.addFirst(result);
           if (hardLinksToAvoidGarbageCollection.size() > numberOfHardLinks) {
@@ -107,6 +124,7 @@ public class SoftCache implements Cache {
     }
   }
 
+  // SoftCahe中缓存的cacheKey是softEntry，key是强引用，value是弱引用
   private static class SoftEntry extends SoftReference<Object> {
     private final Object key;
 

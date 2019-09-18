@@ -24,6 +24,8 @@ import org.apache.ibatis.reflection.ArrayUtil;
 
 /**
  * @author Clinton Begin
+ *
+ * cacheKey --> 缓存的key
  */
 public class CacheKey implements Cloneable, Serializable {
 
@@ -34,11 +36,16 @@ public class CacheKey implements Cloneable, Serializable {
   private static final int DEFAULT_MULTIPLYER = 37;
   private static final int DEFAULT_HASHCODE = 17;
 
+  // 参与计算hashcode
   private final int multiplier;
+  // hashcode
   private int hashcode;
+  // 校验和
   private long checksum;
+  // updateList的个数
   private int count;
   // 8/21/2017 - Sonarlint flags this as needing to be marked transient.  While true if content is not serializable, this is not always true and thus should not be marked transient.
+  // 由updateList中所有的对象来决定两个cacheKey是否一样
   private List<Object> updateList;
 
   public CacheKey() {

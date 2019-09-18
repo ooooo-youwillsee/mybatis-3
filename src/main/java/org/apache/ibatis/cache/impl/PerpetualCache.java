@@ -23,11 +23,15 @@ import org.apache.ibatis.cache.CacheException;
 
 /**
  * @author Clinton Begin
+ *
+ * Perpetual --> 永动的
  */
 public class PerpetualCache implements Cache {
 
+  // cache的id
   private final String id;
 
+  // 记录缓存项的map
   private Map<Object, Object> cache = new HashMap<>();
 
   public PerpetualCache(String id) {
