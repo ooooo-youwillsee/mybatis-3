@@ -417,6 +417,10 @@ public class XMLMapperBuilder extends BaseBuilder {
     return builderAssistant.buildDiscriminator(resultType, column, javaTypeClass, jdbcTypeEnum, typeHandlerClass, discriminatorMap);
   }
 
+  /**
+   * 解析<sql>标签
+   *  <sql id="userColumns"> ${alias}.id,${alias}.username,${alias}.password </sql>
+   */
   private void sqlElement(List<XNode> list) {
     if (configuration.getDatabaseId() != null) {
       sqlElement(list, configuration.getDatabaseId());
@@ -425,11 +429,15 @@ public class XMLMapperBuilder extends BaseBuilder {
   }
 
   private void sqlElement(List<XNode> list, String requiredDatabaseId) {
+    // 遍历所有的sql节点
     for (XNode context : list) {
+      // databaseId
       String databaseId = context.getStringAttribute("databaseId");
+      // sql标签的id
       String id = context.getStringAttribute("id");
       id = builderAssistant.applyCurrentNamespace(id, false);
       if (databaseIdMatchesCurrent(id, databaseId, requiredDatabaseId)) {
+        // 记录到XMLMapperBuilder.sqlFragments (Map<String, XNode>类型)中保存
         sqlFragments.put(id, context);
       }
     }
