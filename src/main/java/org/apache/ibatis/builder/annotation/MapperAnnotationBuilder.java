@@ -125,17 +125,25 @@ public class MapperAnnotationBuilder {
 
   public void parse() {
     String resource = type.toString();
+    // 判断是否加载过这个mapper.xml文件
     if (!configuration.isResourceLoaded(resource)) {
+      // 加载mapper.xml配置文件
       loadXmlResource();
       configuration.addLoadedResource(resource);
       assistant.setCurrentNamespace(type.getName());
+
+      // 解析@CacheNamespace，也是在mapper.xml文件中配置的标签<cache> 二级缓存
       parseCache();
+      // 解析@CacheNamespaceRef，也是在mapper.xml文件中配置的标签<cache-ref> 二级缓存，可以引用其他Mapper接口的缓存策略
       parseCacheRef();
+
+      // 遍历type的每一个方法，可能存在@select、@selectKey注解
       Method[] methods = type.getMethods();
       for (Method method : methods) {
         try {
           // issue #237
           if (!method.isBridge()) {
+            // 解析方法上的注解，添加mappedStatement
             parseStatement(method);
           }
         } catch (IncompleteElementException e) {
