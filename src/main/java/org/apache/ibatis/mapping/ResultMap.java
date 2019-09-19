@@ -35,19 +35,32 @@ import org.apache.ibatis.session.Configuration;
  * @author Clinton Begin
  */
 public class ResultMap {
+  // mybatis核心配置类
   private Configuration configuration;
 
+  // id
   private String id;
+  // type
   private Class<?> type;
+  // 记录了除<discriminator>节点之外的其他映射关系(即ResultMapping对象集合)
   private List<ResultMapping> resultMappings;
+  // 记录了映射关系中带有ID标志的映射关系，例如<id>节点和<constructor>节点的<idArg>子节点
   private List<ResultMapping> idResultMappings;
+  // 记录了映射关系中带有Constructor标志的映射关系，例如<constructor>所有子元素
   private List<ResultMapping> constructorResultMappings;
+  // 记录了映射关系中不带有Constructor标志的映射关系
   private List<ResultMapping> propertyResultMappings;
+  // 记录所有映射关系中涉及的column属性的集合
   private Set<String> mappedColumns;
+  // 记录所有映射关系中涉及的properties属性的集合
   private Set<String> mappedProperties;
+  // 鉴别器，对应<discriminator>节点
   private Discriminator discriminator;
+  // 是否含有嵌套的结采映射，如果某个映射关系中存在resultMap属性，且不存在resultSet属性，则为 tru
   private boolean hasNestedResultMaps;
+  // 是否含有嵌套查询，如果某个属性映射存在select属性，则为true
   private boolean hasNestedQueries;
+  // 是否为自动映射
   private Boolean autoMapping;
 
   private ResultMap() {

@@ -27,23 +27,49 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
 
 /**
  * @author Clinton Begin
+ *
+ *   <result property="username" column="user_name"/>
  */
 public class ResultMapping {
 
+  // mybatis中核心对象configuration
   private Configuration configuration;
+
+  // 对应result标签的property属性
   private String property;
+  // 对应result标签的column属性
   private String column;
+  // 对应result标签的javaType属性
   private Class<?> javaType;
+  // 对应result标签的jdbcType属性
   private JdbcType jdbcType;
+  // 对应result标签的typeHandler属性，它会覆盖默认的typeHandler
   private TypeHandler<?> typeHandler;
+
+  // 对应节点的resultMap属性，该属性通过id引用了另一个<resultMap>节点定义，它负责将结采集中的一部分结果映射到其他关联的结果对象中
   private String nestedResultMapId;
+
+  // 对应节点的select属性，该属性通过id引用了另一个<select>节点定义，它会把指定的列的值传入
+  // select属性指定的select语句中作为参数进行查询。使用select 属性可能会导致 N+l 问题
   private String nestedQueryId;
+
+  // 对应节点的notNullColumn属性拆分后的结果
   private Set<String> notNullColumns;
+
+  // 对应节点的columnPrefix
   private String columnPrefix;
+
+  // 处理后的标志，标志共两个: id和 constructor
   private List<ResultFlag> flags;
+
+  // 对应节点的column属性拆分后生成的结果，composites.size()>0会使column为null
   private List<ResultMapping> composites;
+
+  // 对应节点的resultSet属性
   private String resultSet;
+  // 对应节点的foreignColumn属性
   private String foreignColumn;
+  // 是否延迟加载，对应节点的fetchType 属性
   private boolean lazy;
 
   ResultMapping() {

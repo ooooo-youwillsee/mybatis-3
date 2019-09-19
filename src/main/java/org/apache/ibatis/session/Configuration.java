@@ -943,17 +943,24 @@ public class Configuration {
     @SuppressWarnings("unchecked")
     public V put(String key, V value) {
       if (containsKey(key)) {
+        // 如果包含key，抛出异常
         throw new IllegalArgumentException(name + " already contains value for " + key
             + (conflictMessageProducer == null ? "" : conflictMessageProducer.apply(super.get(key), value)));
       }
+      // key 例如： com.ooooo.UserMapper
       if (key.contains(".")) {
+        // 获得shortKey，取最后一项，例如UserMapper
         final String shortKey = getShortName(key);
         if (super.get(shortKey) == null) {
+          // 不存在，直接添加
           super.put(shortKey, value);
         } else {
+          // 存在，添加一个Ambiguity标识
+          // 这个标识会在调用get()方法时，去判断是否为Ambiguity标识，如果是，则抛出异常
           super.put(shortKey, (V) new Ambiguity(shortKey));
         }
       }
+      // 添加
       return super.put(key, value);
     }
 

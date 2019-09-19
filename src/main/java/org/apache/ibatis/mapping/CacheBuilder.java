@@ -38,13 +38,22 @@ import org.apache.ibatis.reflection.SystemMetaObject;
  * @author Clinton Begin
  */
 public class CacheBuilder {
+
+  // cache的唯一标识，默认情况下就是mapper.xml文件的namespace属性
   private final String id;
+  // Cache的实现类 org.apache.ibatis.cache.impl.PerpetualCache
   private Class<? extends Cache> implementation;
+  // Cache装饰器集合
   private final List<Class<? extends Cache>> decorators;
+  // 缓存大小
   private Integer size;
+  // 清理间隔时间
   private Long clearInterval;
+  // 是否可以读写
   private boolean readWrite;
+  // 属性
   private Properties properties;
+  // 是否阻塞
   private boolean blocking;
 
   public CacheBuilder(String id) {
@@ -90,17 +99,27 @@ public class CacheBuilder {
   }
 
   public Cache build() {
+    // 如果implementation字段和decorators集合为空，则为其设立默认值
+    // implementation默认为是PerpetualCache.class,
+    // decorators集合，默认只包含LruCache.class
     setDefaultImplementations();
+    // 创建基础的Cache对象
     Cache cache = newBaseCacheInstance(implementation, id);
+    // 设置cache对象属性
     setCacheProperties(cache);
     // issue #352, do not apply decorators to custom caches
     if (PerpetualCache.class.equals(cache.getClass())) {
+      // 如果是PerpetualCache类，遍历Cache装饰器集合
       for (Class<? extends Cache> decorator : decorators) {
+        // 装饰cache
         cache = newCacheDecoratorInstance(decorator, cache);
+        // 设置属性
         setCacheProperties(cache);
       }
+      // 添加mybatis标准的装饰器
       cache = setStandardDecorators(cache);
     } else if (!LoggingCache.class.isAssignableFrom(cache.getClass())) {
+      // 不是LoggingCache的子类，则添加Logging的装饰器
       cache = new LoggingCache(cache);
     }
     return cache;
