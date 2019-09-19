@@ -30,24 +30,34 @@ import org.apache.ibatis.session.Configuration;
 
 /**
  * @author Clinton Begin
+ *
+ * mybatis使用这个类来对应mapper.xml中sql节点
  */
 public final class MappedStatement {
 
+  // 节点的id，包括namespace
   private String resource;
+  // mybatis核心配置文件
   private Configuration configuration;
   private String id;
   private Integer fetchSize;
   private Integer timeout;
   private StatementType statementType;
   private ResultSetType resultSetType;
+
+  // 一个sqlSource对应一个sql语句
   private SqlSource sqlSource;
+
   private Cache cache;
   private ParameterMap parameterMap;
   private List<ResultMap> resultMaps;
   private boolean flushCacheRequired;
   private boolean useCache;
   private boolean resultOrdered;
+
+  // SQL的类型，如INSERT、UPDATE、DELETE、SELECT
   private SqlCommandType sqlCommandType;
+
   private KeyGenerator keyGenerator;
   private String[] keyProperties;
   private String[] keyColumns;

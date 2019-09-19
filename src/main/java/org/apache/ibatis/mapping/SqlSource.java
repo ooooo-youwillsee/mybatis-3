@@ -23,6 +23,7 @@ package org.apache.ibatis.mapping;
  */
 public interface SqlSource {
 
+  // 会根据mapper.xml文件和相应的注解(@select)，以及传入的参数，来返回可执行的sql语句
   BoundSql getBoundSql(Object parameterObject);
 
 }

@@ -40,6 +40,7 @@ public class TextSqlNode implements SqlNode {
 
   public boolean isDynamic() {
     DynamicCheckerTokenParser checker = new DynamicCheckerTokenParser();
+    // 就是来解析有没有占位符 '{', '}'
     GenericTokenParser parser = createParser(checker);
     parser.parse(text);
     return checker.isDynamic();

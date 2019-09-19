@@ -525,7 +525,9 @@ public class XMLMapperBuilder extends BaseBuilder {
           // Spring may not know the real resource name so we set a flag
           // to prevent loading again this resource from the mapper interface
           // look at MapperAnnotationBuilder#loadXmlResource
+          // 添加到loadedResources
           configuration.addLoadedResource("namespace:" + namespace);
+          // 借助mapperRegistry来注册mapper
           configuration.addMapper(boundType);
         }
       }

@@ -46,7 +46,9 @@ public class XMLIncludeTransformer {
   public void applyIncludes(Node source) {
     Properties variablesContext = new Properties();
     Properties configurationVariables = configuration.getVariables();
+    // 合并属性
     Optional.ofNullable(configurationVariables).ifPresent(variablesContext::putAll);
+    // 解析include节点
     applyIncludes(source, variablesContext, false);
   }
 
@@ -57,18 +59,24 @@ public class XMLIncludeTransformer {
    */
   private void applyIncludes(Node source, final Properties variablesContext, boolean included) {
     if (source.getNodeName().equals("include")) {
+      // include节点，查找sql节点
       Node toInclude = findSqlFragment(getStringAttribute(source, "refid"), variablesContext);
       Properties toIncludeContext = getVariablesContext(source, variablesContext);
+      // 递归向下
       applyIncludes(toInclude, toIncludeContext, true);
       if (toInclude.getOwnerDocument() != source.getOwnerDocument()) {
         toInclude = source.getOwnerDocument().importNode(toInclude, true);
       }
+      // 把include节点替换为sql节点
       source.getParentNode().replaceChild(toInclude, source);
       while (toInclude.hasChildNodes()) {
+        // 将<sql>节点的子节点添加到<sql>节点前面
         toInclude.getParentNode().insertBefore(toInclude.getFirstChild(), toInclude);
       }
+      // 删除include节点
       toInclude.getParentNode().removeChild(toInclude);
     } else if (source.getNodeType() == Node.ELEMENT_NODE) {
+      // 处理节点
       if (included && !variablesContext.isEmpty()) {
         // replace variables in attribute values
         NamedNodeMap attributes = source.getAttributes();
@@ -79,11 +87,13 @@ public class XMLIncludeTransformer {
       }
       NodeList children = source.getChildNodes();
       for (int i = 0; i < children.getLength(); i++) {
+        // 对每一个子节点，递归解析include
         applyIncludes(children.item(i), variablesContext, included);
       }
     } else if (included && (source.getNodeType() == Node.TEXT_NODE || source.getNodeType() == Node.CDATA_SECTION_NODE)
         && !variablesContext.isEmpty()) {
       // replace variables in text node
+      // 如果是CDATA节点或者是TEXT节点，直接解析节点value值
       source.setNodeValue(PropertyParser.parse(source.getNodeValue(), variablesContext));
     }
   }

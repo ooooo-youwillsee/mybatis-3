@@ -64,8 +64,10 @@ public class XMLScriptBuilder extends BaseBuilder {
   }
 
   public SqlSource parseScriptNode() {
+    // 首先判断当前的节点是不是有动态SQL，动态SQL会包括占位符或是动态 SQL 的相关节点
     MixedSqlNode rootSqlNode = parseDynamicTags(context);
     SqlSource sqlSource;
+    // 根据是否为动态，来创建不同的sqlSource
     if (isDynamic) {
       sqlSource = new DynamicSqlSource(configuration, rootSqlNode);
     } else {
@@ -77,11 +79,17 @@ public class XMLScriptBuilder extends BaseBuilder {
   protected MixedSqlNode parseDynamicTags(XNode node) {
     List<SqlNode> contents = new ArrayList<>();
     NodeList children = node.getNode().getChildNodes();
+    // 遍历子节点
     for (int i = 0; i < children.getLength(); i++) {
+      // 克隆node节点
       XNode child = node.newXNode(children.item(i));
       if (child.getNode().getNodeType() == Node.CDATA_SECTION_NODE || child.getNode().getNodeType() == Node.TEXT_NODE) {
+        // 如果是TEXT节点或者是CDATA节点
+        // 获得节点的内容
         String data = child.getStringBody("");
+        // 创建文本节点
         TextSqlNode textSqlNode = new TextSqlNode(data);
+        // 解析SQL语句，如果含有未解析的”${}”占位符，则为动态SQL
         if (textSqlNode.isDynamic()) {
           contents.add(textSqlNode);
           isDynamic = true;
@@ -89,15 +97,18 @@ public class XMLScriptBuilder extends BaseBuilder {
           contents.add(new StaticTextSqlNode(data));
         }
       } else if (child.getNode().getNodeType() == Node.ELEMENT_NODE) { // issue #628
+        // 如采子节点是一个标签，那么一定是动态SQL，并且根据不同的动态标签生成
         String nodeName = child.getNode().getNodeName();
         NodeHandler handler = nodeHandlerMap.get(nodeName);
         if (handler == null) {
           throw new BuilderException("Unknown element <" + nodeName + "> in SQL statement.");
         }
+        // 处理动态SQL，并将解析得到的SqlNode对象放入contents 集合中保存
         handler.handleNode(child, contents);
         isDynamic = true;
       }
     }
+    // 将解析完的sqlNode，包装为MixedSqlNode
     return new MixedSqlNode(contents);
   }
 
