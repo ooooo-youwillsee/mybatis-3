@@ -32,6 +32,10 @@ import org.apache.ibatis.session.Configuration;
  * Can also have additional parameters that are created by the dynamic language (for loops, bind...).
  *
  * @author Clinton Begin
+ *
+ *
+ *  BoundSql 就是可以直接运行的sql对象了
+ *
  */
 public class BoundSql {
 
