@@ -22,18 +22,33 @@ import org.apache.ibatis.session.Configuration;
 
 /**
  * @author Clinton Begin
+ *
+ * Foreach节点
+ *
+ * 把${item}解析为 __frch_item_0 、 __frch_item_1
  */
 public class ForEachSqlNode implements SqlNode {
   public static final String ITEM_PREFIX = "__frch_";
 
   private final ExpressionEvaluator evaluator;
   private final String collectionExpression;
+
+  // foreach节点
   private final SqlNode contents;
+
+  // 前缀，如 (
   private final String open;
+  // 后缀，如 )
   private final String close;
+  // 分隔符，如 ，
   private final String separator;
+
+  // 当前遍历的item
   private final String item;
+  // 当前遍历的index
   private final String index;
+
+  // mybatis的核心配置对象
   private final Configuration configuration;
 
   public ForEachSqlNode(Configuration configuration, SqlNode contents, String collectionExpression, String index, String item, String open, String close, String separator) {
@@ -168,8 +183,10 @@ public class ForEachSqlNode implements SqlNode {
 
   }
 
-
+  // 追加前缀
   private class PrefixedContext extends DynamicContext {
+
+    // 委托delegate对象中的sqlBuilder来添加sql语句
     private final DynamicContext delegate;
     private final String prefix;
     private boolean prefixApplied;

@@ -24,6 +24,8 @@ import org.apache.ibatis.session.Configuration;
 
 /**
  * @author Clinton Begin
+ *
+ * StaticSq!Source 中记录的SQL语句中可能含有 “?”占位符， 但是可以直接提交给数据库执行
  */
 public class StaticSqlSource implements SqlSource {
 

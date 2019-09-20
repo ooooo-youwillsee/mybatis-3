@@ -17,7 +17,16 @@ package org.apache.ibatis.scripting.xmltags;
 
 /**
  * @author Clinton Begin
+ *
+ * 解析动态节点的接口
  */
 public interface SqlNode {
+
+  /**
+   * apply方法会解析该SqlNode所记录的动态SQL节点，
+   * 并调用DynamicContext.appendSql()方法将解析后的SQL片段追加到DynamicContext.sqlBuilder中
+   * @param context 用户传入参数上下文
+   * @return
+   */
   boolean apply(DynamicContext context);
 }

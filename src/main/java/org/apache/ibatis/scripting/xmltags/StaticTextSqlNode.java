@@ -17,6 +17,8 @@ package org.apache.ibatis.scripting.xmltags;
 
 /**
  * @author Clinton Begin
+ *
+ * 静态文本节点， 直接追加到sqlBuilder中
  */
 public class StaticTextSqlNode implements SqlNode {
   private final String text;

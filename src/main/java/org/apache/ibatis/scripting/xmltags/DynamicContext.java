@@ -28,6 +28,8 @@ import org.apache.ibatis.session.Configuration;
 
 /**
  * @author Clinton Begin
+ *
+ * 用来记录解析动态sql语句之后的sql语句片段
  */
 public class DynamicContext {
 
@@ -38,19 +40,28 @@ public class DynamicContext {
     OgnlRuntime.setPropertyAccessor(ContextMap.class, new ContextAccessor());
   }
 
+  // 参数上下文
   private final ContextMap bindings;
+
+  // 会将解析完的sql片段拼装为一个完整的sql片段
   private final StringJoiner sqlBuilder = new StringJoiner(" ");
+
   private int uniqueNumber = 0;
 
+  // 构造函数
+  // 参数parameterObject,就是用户传入的参数
   public DynamicContext(Configuration configuration, Object parameterObject) {
     if (parameterObject != null && !(parameterObject instanceof Map)) {
+      // 对于非Map类型的参数，会创建对应的MetaObject对象，并封装成ContextMap 对象
       MetaObject metaObject = configuration.newMetaObject(parameterObject);
       boolean existsTypeHandler = configuration.getTypeHandlerRegistry().hasTypeHandler(parameterObject.getClass());
       bindings = new ContextMap(metaObject, existsTypeHandler);
     } else {
       bindings = new ContextMap(null, false);
     }
+    // 将PARAMETER_OBJECT_KEY->parameterObject 这一对应关系添加到 bindings 集合中
     bindings.put(PARAMETER_OBJECT_KEY, parameterObject);
+    // 将DATABASE_ID_KEY->databaseId 这一对应关系添加到 bindings 集合中
     bindings.put(DATABASE_ID_KEY, configuration.getDatabaseId());
   }
 
@@ -95,10 +106,12 @@ public class DynamicContext {
         return null;
       }
 
+      // 支持fallback，并且没有对应的getter方法，则返回原始的java对象
       if (fallbackParameterObject && !parameterMetaObject.hasGetter(strKey)) {
         return parameterMetaObject.getOriginalObject();
       } else {
         // issue #61 do not modify the context when reading
+        // 从运行时参数中查找对应属性
         return parameterMetaObject.getValue(strKey);
       }
     }

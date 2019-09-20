@@ -17,6 +17,9 @@ package org.apache.ibatis.scripting.xmltags;
 
 /**
  * @author Clinton Begin
+ *
+ * if节点
+ *
  */
 public class IfSqlNode implements SqlNode {
   private final ExpressionEvaluator evaluator;
@@ -31,6 +34,7 @@ public class IfSqlNode implements SqlNode {
 
   @Override
   public boolean apply(DynamicContext context) {
+    // 根据if条件来添加sql片段
     if (evaluator.evaluateBoolean(test, context.getBindings())) {
       contents.apply(context);
       return true;

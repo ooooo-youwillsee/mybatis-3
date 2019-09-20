@@ -19,6 +19,9 @@ import java.util.List;
 
 /**
  * @author Clinton Begin
+ *
+ * 其他SqlNode的集合， apply就是遍历一遍sqlNode，循环调用apply方法
+ *
  */
 public class MixedSqlNode implements SqlNode {
   private final List<SqlNode> contents;
