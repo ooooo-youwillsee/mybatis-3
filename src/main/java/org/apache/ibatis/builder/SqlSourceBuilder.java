@@ -30,6 +30,12 @@ import org.apache.ibatis.type.JdbcType;
 
 /**
  * @author Clinton Begin
+ *
+ * 经过SqlNode解析完成后，sql语句会被传递到SqlSourceBuilder中来进行进一步解析，
+ * 主要是
+ *  1、解析SQL语句中的“#{}”占位符中定义的属性，格式类似于#{_frc_item_0,javaType=int,jdbcType=NUMERIC,
+ * typeHandler=MyTypeHandler}
+ *  2、将sql语句中'${}'替换为'?'
  */
 public class SqlSourceBuilder extends BaseBuilder {
 
@@ -40,16 +46,22 @@ public class SqlSourceBuilder extends BaseBuilder {
   }
 
   public SqlSource parse(String originalSql, Class<?> parameterType, Map<String, Object> additionalParameters) {
+    // 创建ParameterMappingTokenHandler对象，它是解析”#{}”占位符中的参数属性以及替换占位符的核心
     ParameterMappingTokenHandler handler = new ParameterMappingTokenHandler(configuration, parameterType, additionalParameters);
+    // 使用GenericTokenParser与ParameterMappingTokenHandler配合解析”#{}”占位符
     GenericTokenParser parser = new GenericTokenParser("#{", "}", handler);
     String sql = parser.parse(originalSql);
+    // 创建StaticSqlSource，其中封装了占位符被替换成”?”的SQL语句以及参数对应的ParameterMapping集合， 然后调用getBoundSql()方法
     return new StaticSqlSource(configuration, sql, handler.getParameterMappings());
   }
 
   private static class ParameterMappingTokenHandler extends BaseBuilder implements TokenHandler {
 
+    // 记录解析后参数映射集合，有序的
     private List<ParameterMapping> parameterMappings = new ArrayList<>();
+    // 参数类型
     private Class<?> parameterType;
+    // DynamicContext.bindings 集合对应的 MetaObject 对象
     private MetaObject metaParameters;
 
     public ParameterMappingTokenHandler(Configuration configuration, Class<?> parameterType, Map<String, Object> additionalParameters) {
@@ -64,12 +76,19 @@ public class SqlSourceBuilder extends BaseBuilder {
 
     @Override
     public String handleToken(String content) {
+      // 处理token
       parameterMappings.add(buildParameterMapping(content));
+      // 返回?定位符
       return "?";
     }
 
     private ParameterMapping buildParameterMapping(String content) {
+      // 将占位符中内容解析，例如 ${__frc_item_0,javaType=int,jdbcType=NUMERIC,typeHandler=MyTypeHandler}，
+      // 它就会被解析成如下 Map:
+      // { ”property” ->  ”__frch_item_0", "javaType” -> ”int” , ”jdbcType” -> "NUMERIC”, ”typeHandler" -> ”MyTypeHandler”}
       Map<String, String> propertiesMap = parseParameterMapping(content);
+
+      // 获得属性，从meteParameters中获取属性的类型
       String property = propertiesMap.get("property");
       Class<?> propertyType;
       if (metaParameters.hasGetter(property)) { // issue #448 get type from additional params
@@ -91,6 +110,8 @@ public class SqlSourceBuilder extends BaseBuilder {
       ParameterMapping.Builder builder = new ParameterMapping.Builder(configuration, property, propertyType);
       Class<?> javaType = propertyType;
       String typeHandlerAlias = null;
+
+      // 遍历属性，builder设置属性
       for (Map.Entry<String, String> entry : propertiesMap.entrySet()) {
         String name = entry.getKey();
         String value = entry.getValue();
@@ -117,9 +138,11 @@ public class SqlSourceBuilder extends BaseBuilder {
           throw new BuilderException("An invalid property '" + name + "' was found in mapping #{" + content + "}.  Valid properties are " + PARAMETER_PROPERTIES);
         }
       }
+      // typeHandler
       if (typeHandlerAlias != null) {
         builder.typeHandler(resolveTypeHandler(javaType, typeHandlerAlias));
       }
+      // 创建ParameterMapping
       return builder.build();
     }
 

@@ -35,10 +35,15 @@ import org.apache.ibatis.session.Configuration;
  */
 public class BoundSql {
 
+  // sql语句，可能含有'?'占位符
   private final String sql;
+  // sql中参数属性集合
   private final List<ParameterMapping> parameterMappings;
+  // 用户传入的实际参数
   private final Object parameterObject;
+  // 用来赋值DynamicContext.bindings
   private final Map<String, Object> additionalParameters;
+  // additionalParameters对应的MetaObject
   private final MetaObject metaParameters;
 
   public BoundSql(Configuration configuration, String sql, List<ParameterMapping> parameterMappings, Object parameterObject) {
