@@ -702,6 +702,10 @@ public class DefaultResultSetHandler implements ResultSetHandler {
     throw new ExecutorException("Do not know how to create an instance of " + resultType);
   }
 
+
+  /**
+   * 使用构造函数创建结果对象 ，constructor中的属性是不是延迟加载的
+   */
   Object createParameterizedResultObject(ResultSetWrapper rsw, Class<?> resultType, List<ResultMapping> constructorMappings,
                                          List<Class<?>> constructorArgTypes, List<Object> constructorArgs, String columnPrefix) {
     boolean foundValues = false;
@@ -815,15 +819,23 @@ public class DefaultResultSetHandler implements ResultSetHandler {
   //
 
   private Object getNestedQueryConstructorValue(ResultSet rs, ResultMapping constructorMapping, String columnPrefix) throws SQLException {
+    // 嵌套queryId
     final String nestedQueryId = constructorMapping.getNestedQueryId();
+    // 嵌套查询statement
     final MappedStatement nestedQuery = configuration.getMappedStatement(nestedQueryId);
     final Class<?> nestedQueryParameterType = nestedQuery.getParameterMap().getType();
+
+    // 获得用于嵌套查询的参数对象
     final Object nestedQueryParameterObject = prepareParameterForNestedQuery(rs, constructorMapping, nestedQueryParameterType, columnPrefix);
     Object value = null;
     if (nestedQueryParameterObject != null) {
+      // boundSql --> 可执行的sql语句
       final BoundSql nestedBoundSql = nestedQuery.getBoundSql(nestedQueryParameterObject);
+      // cacheKey
       final CacheKey key = executor.createCacheKey(nestedQuery, nestedQueryParameterObject, RowBounds.DEFAULT, nestedBoundSql);
+      // 嵌套查询的javaType
       final Class<?> targetType = constructorMapping.getJavaType();
+      // 创建resultLoader，调用loadResult()方法
       final ResultLoader resultLoader = new ResultLoader(configuration, executor, nestedQuery, nestedQueryParameterObject, targetType, key, nestedBoundSql);
       value = resultLoader.loadResult();
     }
