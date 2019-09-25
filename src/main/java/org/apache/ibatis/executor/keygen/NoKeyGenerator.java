@@ -23,6 +23,8 @@ import org.apache.ibatis.mapping.MappedStatement;
 /**
  * @author Clinton Begin
  * @author Kazuki Shimizu
+ *
+ * mybatis提供的空实现
  */
 public class NoKeyGenerator implements KeyGenerator {
 

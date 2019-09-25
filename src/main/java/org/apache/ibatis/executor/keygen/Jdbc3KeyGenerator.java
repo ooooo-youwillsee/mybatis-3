@@ -44,6 +44,11 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
 /**
  * @author Clinton Begin
  * @author Kazuki Shimizu
+ *
+ * 这个类用于取回数据库生成的自增Id，对应mybatis-config.xml文件中useGeneratedKeys配置
+ * 实现了processAfter方法
+ *
+ * <select keyProperty="id" >
  */
 public class Jdbc3KeyGenerator implements KeyGenerator {
 
@@ -67,17 +72,23 @@ public class Jdbc3KeyGenerator implements KeyGenerator {
     processBatch(ms, stmt, parameter);
   }
 
+  // parameter 就是用户传入的参数
   public void processBatch(MappedStatement ms, Statement stmt, Object parameter) {
+    // 获取key的属性，例如<select keyProperty="id" >
     final String[] keyProperties = ms.getKeyProperties();
     if (keyProperties == null || keyProperties.length == 0) {
       return;
     }
+    // stmt.getGeneratedKeys() 返回一个自动生成key，如果不支持自动生成，则会返回一个empty的resultSet
     try (ResultSet rs = stmt.getGeneratedKeys()) {
+      // resultSet元数据
       final ResultSetMetaData rsmd = rs.getMetaData();
       final Configuration configuration = ms.getConfiguration();
       if (rsmd.getColumnCount() < keyProperties.length) {
+        // count为0，是不支持自动生成key
         // Error?
       } else {
+        // 分配key
         assignKeys(configuration, rs, rsmd, keyProperties, parameter);
       }
     } catch (Exception e) {
@@ -89,14 +100,17 @@ public class Jdbc3KeyGenerator implements KeyGenerator {
   private void assignKeys(Configuration configuration, ResultSet rs, ResultSetMetaData rsmd, String[] keyProperties,
       Object parameter) throws SQLException {
     if (parameter instanceof ParamMap || parameter instanceof StrictMap) {
+      // 参数是map类型，，ParamMap为有注解@param
       // Multi-param or single param with @Param
       assignKeysToParamMap(configuration, rs, rsmd, keyProperties, (Map<String, ?>) parameter);
     } else if (parameter instanceof ArrayList && !((ArrayList<?>) parameter).isEmpty()
         && ((ArrayList<?>) parameter).get(0) instanceof ParamMap) {
       // Multi-param or single param with @Param in batch operation
+      // 参数为list
       assignKeysToParamMapList(configuration, rs, rsmd, keyProperties, ((ArrayList<ParamMap<?>>) parameter));
     } else {
       // Single param without @Param
+      // 单一参数对象
       assignKeysToParam(configuration, rs, rsmd, keyProperties, parameter);
     }
   }
@@ -108,19 +122,25 @@ public class Jdbc3KeyGenerator implements KeyGenerator {
       return;
     }
     List<KeyAssigner> assignerList = new ArrayList<>();
+    // 添加KeyAssigner
     for (int i = 0; i < keyProperties.length; i++) {
       assignerList.add(new KeyAssigner(configuration, rsmd, i + 1, null, keyProperties[i]));
     }
     Iterator<?> iterator = params.iterator();
+    // 此时，rs可能就只有一行的结果
     while (rs.next()) {
       if (!iterator.hasNext()) {
         throw new ExecutorException(String.format(MSG_TOO_MANY_KEYS, params.size()));
       }
       Object param = iterator.next();
+      // assign key值
       assignerList.forEach(x -> x.assign(rs, param));
     }
   }
 
+  /**
+   * 结果类型为list，即需要对rs遍历，获取每一行数据，对每一个paramMap都要设置key
+   */
   private void assignKeysToParamMapList(Configuration configuration, ResultSet rs, ResultSetMetaData rsmd,
       String[] keyProperties, ArrayList<ParamMap<?>> paramMapList) throws SQLException {
     Iterator<ParamMap<?>> iterator = paramMapList.iterator();
@@ -130,6 +150,7 @@ public class Jdbc3KeyGenerator implements KeyGenerator {
       if (!iterator.hasNext()) {
         throw new ExecutorException(String.format(MSG_TOO_MANY_KEYS, counter));
       }
+      // 结果集遍历 ，也就是一个rs对应一个paramMap
       ParamMap<?> paramMap = iterator.next();
       if (assignerList.isEmpty()) {
         for (int i = 0; i < keyProperties.length; i++) {
@@ -138,6 +159,7 @@ public class Jdbc3KeyGenerator implements KeyGenerator {
                   .getValue());
         }
       }
+      // assign key
       assignerList.forEach(x -> x.assign(rs, paramMap));
       counter++;
     }
@@ -149,7 +171,9 @@ public class Jdbc3KeyGenerator implements KeyGenerator {
       return;
     }
     Map<String, Entry<Iterator<?>, List<KeyAssigner>>> assignerMap = new HashMap<>();
+
     for (int i = 0; i < keyProperties.length; i++) {
+      // 遍历key属性，
       Entry<String, KeyAssigner> entry = getAssignerForParamMap(configuration, rsmd, i + 1, paramMap, keyProperties[i],
           keyProperties, true);
       Entry<Iterator<?>, List<KeyAssigner>> iteratorPair = assignerMap.computeIfAbsent(entry.getKey(),
@@ -157,12 +181,15 @@ public class Jdbc3KeyGenerator implements KeyGenerator {
       iteratorPair.getValue().add(entry.getValue());
     }
     long counter = 0;
+    // rs，此时可能只有一行的结果
     while (rs.next()) {
+      // pair的value: List<KeyAssigner> 可能只有一个元素
       for (Entry<Iterator<?>, List<KeyAssigner>> pair : assignerMap.values()) {
         if (!pair.getKey().hasNext()) {
           throw new ExecutorException(String.format(MSG_TOO_MANY_KEYS, counter));
         }
         Object param = pair.getKey().next();
+        // assign key值
         pair.getValue().forEach(x -> x.assign(rs, param));
       }
       counter++;
@@ -248,8 +275,10 @@ public class Jdbc3KeyGenerator implements KeyGenerator {
     protected void assign(ResultSet rs, Object param) {
       if (paramName != null) {
         // If paramName is set, param is ParamMap
+        // 方法参数可能是 (@param("id") Long id)
         param = ((ParamMap<?>) param).get(paramName);
       }
+      // 创建metaObject，获取propertyName对应的value，使用metaParam#setValue()方法设置值
       MetaObject metaParam = configuration.newMetaObject(param);
       try {
         if (typeHandler == null) {
@@ -265,6 +294,7 @@ public class Jdbc3KeyGenerator implements KeyGenerator {
         if (typeHandler == null) {
           // Error?
         } else {
+          // 从rs中获取相应的值
           Object value = typeHandler.getResult(rs, columnPosition);
           metaParam.setValue(propertyName, value);
         }

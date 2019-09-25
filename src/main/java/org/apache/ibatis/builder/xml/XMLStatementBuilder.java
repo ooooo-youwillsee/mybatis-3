@@ -162,6 +162,7 @@ public class XMLStatementBuilder extends BaseBuilder {
     //defaults 设置select的语句的默认值
     boolean useCache = false;
     boolean resultOrdered = false;
+    // 设置主键生成策略，默认为空
     KeyGenerator keyGenerator = NoKeyGenerator.INSTANCE;
     Integer fetchSize = null;
     Integer timeout = null;
