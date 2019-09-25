@@ -23,6 +23,8 @@ import org.apache.ibatis.session.Configuration;
 
 /**
  * @author Eduardo Macarron
+ *
+ * Mybatis提供的代理工厂, 用于懒加载时创建代理对象
  */
 public interface ProxyFactory {
 
@@ -30,6 +32,7 @@ public interface ProxyFactory {
     // NOP
   }
 
+  // 创建代理对象
   Object createProxy(Object target, ResultLoaderMap lazyLoader, Configuration configuration, ObjectFactory objectFactory, List<Class<?>> constructorArgTypes, List<Object> constructorArgs);
 
 }
