@@ -17,6 +17,8 @@ package org.apache.ibatis.session;
 
 /**
  * @author Clinton Begin
+ *
+ * 可以这是rowBounds（行的边界）,也就是从结果集的第几行开始处理
  */
 public class RowBounds {
 

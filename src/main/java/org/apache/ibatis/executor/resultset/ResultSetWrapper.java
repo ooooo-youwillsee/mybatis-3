@@ -40,21 +40,31 @@ import org.apache.ibatis.type.UnknownTypeHandler;
  */
 public class ResultSetWrapper {
 
+  // 数据库中的resultSet
   private final ResultSet resultSet;
   private final TypeHandlerRegistry typeHandlerRegistry;
+  // 每一列的列名
   private final List<String> columnNames = new ArrayList<>();
+  // 每一列的类型
   private final List<String> classNames = new ArrayList<>();
+  // 每一列的jdbcType
   private final List<JdbcType> jdbcTypes = new ArrayList<>();
+  // 类型处理器map， key为resultMap的Id
   private final Map<String, Map<Class<?>, TypeHandler<?>>> typeHandlerMap = new HashMap<>();
+  // 已经映射的列名map， key为resultMap的id
   private final Map<String, List<String>> mappedColumnNamesMap = new HashMap<>();
+  // 未映射的列名map， key为resultMap的id
   private final Map<String, List<String>> unMappedColumnNamesMap = new HashMap<>();
 
   public ResultSetWrapper(ResultSet rs, Configuration configuration) throws SQLException {
     super();
     this.typeHandlerRegistry = configuration.getTypeHandlerRegistry();
     this.resultSet = rs;
+    // 获取resultset的元信息
     final ResultSetMetaData metaData = rs.getMetaData();
+    // 获取列数
     final int columnCount = metaData.getColumnCount();
+    // 遍历
     for (int i = 1; i <= columnCount; i++) {
       columnNames.add(configuration.isUseColumnLabel() ? metaData.getColumnLabel(i) : metaData.getColumnName(i));
       jdbcTypes.add(JdbcType.forCode(metaData.getColumnType(i)));
@@ -141,11 +151,14 @@ public class ResultSetWrapper {
     return null;
   }
 
+  //  加载MappedColumn
   private void loadMappedAndUnmappedColumnNames(ResultMap resultMap, String columnPrefix) throws SQLException {
     List<String> mappedColumnNames = new ArrayList<>();
     List<String> unmappedColumnNames = new ArrayList<>();
     final String upperColumnPrefix = columnPrefix == null ? null : columnPrefix.toUpperCase(Locale.ENGLISH);
+    // mappedColumns （我们在mapper.xm中定义的resultMap的column属性）
     final Set<String> mappedColumns = prependPrefixes(resultMap.getMappedColumns(), upperColumnPrefix);
+    // 遍历columnName(数据库中真实查询出来的列)
     for (String columnName : columnNames) {
       final String upperColumnName = columnName.toUpperCase(Locale.ENGLISH);
       if (mappedColumns.contains(upperColumnName)) {
@@ -154,6 +167,8 @@ public class ResultSetWrapper {
         unmappedColumnNames.add(columnName);
       }
     }
+
+    // 将ResultMap的Id和列前缀组成key，将ResultMap映射的列名及未映射的列名保存到Map中
     mappedColumnNamesMap.put(getMapKey(resultMap, columnPrefix), mappedColumnNames);
     unMappedColumnNamesMap.put(getMapKey(resultMap, columnPrefix), unmappedColumnNames);
   }
@@ -161,6 +176,7 @@ public class ResultSetWrapper {
   public List<String> getMappedColumnNames(ResultMap resultMap, String columnPrefix) throws SQLException {
     List<String> mappedColumnNames = mappedColumnNamesMap.get(getMapKey(resultMap, columnPrefix));
     if (mappedColumnNames == null) {
+      // 从mappedColumnNamesMap中没有找到mappedColumnNames,则加载MappedColumn
       loadMappedAndUnmappedColumnNames(resultMap, columnPrefix);
       mappedColumnNames = mappedColumnNamesMap.get(getMapKey(resultMap, columnPrefix));
     }
