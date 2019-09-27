@@ -31,21 +31,28 @@ import org.apache.ibatis.session.RowBounds;
 
 /**
  * @author Clinton Begin
+ *
+ *  策略模式, 通过statementType来决定是哪个一个statementHandler
  */
 public class RoutingStatementHandler implements StatementHandler {
 
+  // 底层委托的真正statementHandler
   private final StatementHandler delegate;
 
   public RoutingStatementHandler(Executor executor, MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
 
+    // 根据不同的statementType来决定不同的statementHandler
     switch (ms.getStatementType()) {
       case STATEMENT:
+        // simple
         delegate = new SimpleStatementHandler(executor, ms, parameter, rowBounds, resultHandler, boundSql);
         break;
       case PREPARED:
+        // prepared 预编译
         delegate = new PreparedStatementHandler(executor, ms, parameter, rowBounds, resultHandler, boundSql);
         break;
       case CALLABLE:
+        // 存储过程
         delegate = new CallableStatementHandler(executor, ms, parameter, rowBounds, resultHandler, boundSql);
         break;
       default:

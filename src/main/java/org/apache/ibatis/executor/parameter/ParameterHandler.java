@@ -27,6 +27,7 @@ public interface ParameterHandler {
 
   Object getParameterObject();
 
+  // 向ps中设置参数
   void setParameters(PreparedStatement ps)
       throws SQLException;
 

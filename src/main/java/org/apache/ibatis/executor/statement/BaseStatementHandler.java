@@ -35,6 +35,8 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
 
 /**
  * @author Clinton Begin
+ *
+ *  statementHandler的基础实现类
  */
 public abstract class BaseStatementHandler implements StatementHandler {
 
@@ -42,10 +44,16 @@ public abstract class BaseStatementHandler implements StatementHandler {
   protected final ObjectFactory objectFactory;
   protected final TypeHandlerRegistry typeHandlerRegistry;
   protected final ResultSetHandler resultSetHandler;
+
+  // 主要为sql语句绑定实参，也就是sql语句中占位符'?'的参数
   protected final ParameterHandler parameterHandler;
 
   protected final Executor executor;
+
+  // 记录sql语句对应的MappedStatement和BoundSql，，也就是select、insert、update、delete
   protected final MappedStatement mappedStatement;
+
+  // 行记录， 设置从哪一行开始读取，读取的最大条数
   protected final RowBounds rowBounds;
 
   protected BoundSql boundSql;
@@ -60,13 +68,17 @@ public abstract class BaseStatementHandler implements StatementHandler {
     this.objectFactory = configuration.getObjectFactory();
 
     if (boundSql == null) { // issue #435, get the key before calculating the statement
+      // 调用KeyGenerator来生成主键key, 然后将主键插入到parameterObject对象中, --> processBefore()
       generateKeys(parameterObject);
+      // 根据参数对象，来获取可执行的sql（可能存在占位符'?'）
       boundSql = mappedStatement.getBoundSql(parameterObject);
     }
 
     this.boundSql = boundSql;
 
+    // 参数处理器，执行sql语句，设置参数
     this.parameterHandler = configuration.newParameterHandler(mappedStatement, parameterObject, boundSql);
+    // 结果集处理器， 处理执行的结果
     this.resultSetHandler = configuration.newResultSetHandler(executor, mappedStatement, rowBounds, parameterHandler, resultHandler, boundSql);
   }
 

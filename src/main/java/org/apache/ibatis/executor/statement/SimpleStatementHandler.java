@@ -34,6 +34,10 @@ import org.apache.ibatis.session.RowBounds;
 
 /**
  * @author Clinton Begin
+ *
+ * simple statementHandler  --> 通过instantiateStatement()方法来初始化statement
+ *
+ * 处理statement
  */
 public class SimpleStatementHandler extends BaseStatementHandler {
 
@@ -42,7 +46,9 @@ public class SimpleStatementHandler extends BaseStatementHandler {
   }
 
   @Override
+  // 使用keyGenerator来生成主键
   public int update(Statement statement) throws SQLException {
+    // 获取sql语句，
     String sql = boundSql.getSql();
     Object parameterObject = boundSql.getParameterObject();
     KeyGenerator keyGenerator = mappedStatement.getKeyGenerator();
@@ -68,12 +74,14 @@ public class SimpleStatementHandler extends BaseStatementHandler {
 
   @Override
   public void batch(Statement statement) throws SQLException {
+    // 与query类似
     String sql = boundSql.getSql();
     statement.addBatch(sql);
   }
 
   @Override
   public <E> List<E> query(Statement statement, ResultHandler resultHandler) throws SQLException {
+    // 获取sql，调用execute()方法执行，使用resultSetHandler来处理结果
     String sql = boundSql.getSql();
     statement.execute(sql);
     return resultSetHandler.handleResultSets(statement);
@@ -81,6 +89,7 @@ public class SimpleStatementHandler extends BaseStatementHandler {
 
   @Override
   public <E> Cursor<E> queryCursor(Statement statement) throws SQLException {
+    // 与query类似
     String sql = boundSql.getSql();
     statement.execute(sql);
     return resultSetHandler.handleCursorResultSets(statement);
@@ -89,6 +98,7 @@ public class SimpleStatementHandler extends BaseStatementHandler {
   @Override
   protected Statement instantiateStatement(Connection connection) throws SQLException {
     if (mappedStatement.getResultSetType() == ResultSetType.DEFAULT) {
+      // 设置结果集是否可以滚动及其游标是否可以上下移动，设置结果集是否可更新
       return connection.createStatement();
     } else {
       return connection.createStatement(mappedStatement.getResultSetType().getValue(), ResultSet.CONCUR_READ_ONLY);

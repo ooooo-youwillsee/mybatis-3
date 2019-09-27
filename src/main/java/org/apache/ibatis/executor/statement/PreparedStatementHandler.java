@@ -34,6 +34,10 @@ import org.apache.ibatis.session.RowBounds;
 
 /**
  * @author Clinton Begin
+ *
+ * prepared statementHander --> 通过instantiateStatement()方法
+ *
+ * 执行preparedStatement
  */
 public class PreparedStatementHandler extends BaseStatementHandler {
 
@@ -48,6 +52,7 @@ public class PreparedStatementHandler extends BaseStatementHandler {
     int rows = ps.getUpdateCount();
     Object parameterObject = boundSql.getParameterObject();
     KeyGenerator keyGenerator = mappedStatement.getKeyGenerator();
+    // KeyGenerator#processAfter
     keyGenerator.processAfter(executor, mappedStatement, ps, parameterObject);
     return rows;
   }
@@ -75,11 +80,15 @@ public class PreparedStatementHandler extends BaseStatementHandler {
   @Override
   protected Statement instantiateStatement(Connection connection) throws SQLException {
     String sql = boundSql.getSql();
+    // 判断KeyGenerator
     if (mappedStatement.getKeyGenerator() instanceof Jdbc3KeyGenerator) {
+      // Jdbc3KeyGenerator是processAfter类型
       String[] keyColumnNames = mappedStatement.getKeyColumns();
       if (keyColumnNames == null) {
+        // 返回数据库生成的主键
         return connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
       } else {
+        // 执行sql完成了，keyColumnNames会返回
         return connection.prepareStatement(sql, keyColumnNames);
       }
     } else if (mappedStatement.getResultSetType() == ResultSetType.DEFAULT) {
