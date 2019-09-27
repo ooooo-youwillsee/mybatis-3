@@ -29,6 +29,10 @@ import org.apache.ibatis.transaction.Transaction;
 
 /**
  * @author Clinton Begin
+ *
+ * Executor 是mybatis的核心类， 定义了数据库操作的基本方法
+ *
+ * 例如：update、query、commit、rollback、clearLocalCache（清空一级缓存）
  */
 public interface Executor {
 

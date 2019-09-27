@@ -33,6 +33,9 @@ import org.apache.ibatis.transaction.Transaction;
 
 /**
  * @author Clinton Begin
+ *
+ * simple  简单的实现了doXXX()方法，实现思路大致类似
+ *
  */
 public class SimpleExecutor extends BaseExecutor {
 
@@ -57,9 +60,13 @@ public class SimpleExecutor extends BaseExecutor {
   public <E> List<E> doQuery(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) throws SQLException {
     Statement stmt = null;
     try {
+      // mybatis 核心配置队形
       Configuration configuration = ms.getConfiguration();
+      // StatementHandler对象 --> RoutingStatementHandler (策略模式来选择statementHandler)
       StatementHandler handler = configuration.newStatementHandler(wrapper, ms, parameter, rowBounds, resultHandler, boundSql);
+      // prepareStatement, 调用parameterize()来设置sql语句中占位符参数
       stmt = prepareStatement(handler, ms.getStatementLog());
+      // query
       return handler.query(stmt, resultHandler);
     } finally {
       closeStatement(stmt);
@@ -84,6 +91,7 @@ public class SimpleExecutor extends BaseExecutor {
     Statement stmt;
     Connection connection = getConnection(statementLog);
     stmt = handler.prepare(connection, transaction.getTimeout());
+    // 处理sql语句中的占位符参数， 就是利用parameterHandler
     handler.parameterize(stmt);
     return stmt;
   }

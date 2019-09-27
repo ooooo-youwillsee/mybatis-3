@@ -35,6 +35,12 @@ import org.apache.ibatis.transaction.Transaction;
 
 /**
  * @author Clinton Begin
+ *
+ * reuse --> 重用 ，通过属性statementMap来缓存使用的statement对象，key为sql语句
+ *
+ * 重用statement对象，可以减少sql预编译的时间
+ *
+ * ReuseExecutor.doQuery()、 doQueryCursor()、 doUpdate()方法的实现与SimpleExecutor中对应方法的实现一样
  */
 public class ReuseExecutor extends BaseExecutor {
 
@@ -70,6 +76,7 @@ public class ReuseExecutor extends BaseExecutor {
 
   @Override
   public List<BatchResult> doFlushStatements(boolean isRollback) {
+    // 清空statementMap缓存，关闭stmt
     for (Statement stmt : statementMap.values()) {
       closeStatement(stmt);
     }
@@ -80,15 +87,21 @@ public class ReuseExecutor extends BaseExecutor {
   private Statement prepareStatement(StatementHandler handler, Log statementLog) throws SQLException {
     Statement stmt;
     BoundSql boundSql = handler.getBoundSql();
+    // 获得sql语句
     String sql = boundSql.getSql();
     if (hasStatementFor(sql)) {
+      // 有statement，从缓存中获取Statement对象
       stmt = getStatement(sql);
+      // 修改超时时间
       applyTransactionTimeout(stmt);
     } else {
+      // 获取数据库connection对象，prepare
       Connection connection = getConnection(statementLog);
       stmt = handler.prepare(connection, transaction.getTimeout());
+      // 添加statementMap缓存中
       putStatement(sql, stmt);
     }
+    // 为sql语句中占位符设置参数
     handler.parameterize(stmt);
     return stmt;
   }
