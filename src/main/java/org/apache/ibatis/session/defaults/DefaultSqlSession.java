@@ -44,14 +44,22 @@ import org.apache.ibatis.session.SqlSession;
  * Note that this class is not Thread-Safe.
  *
  * @author Clinton Begin
+ *
+ * SqlSession接口的默认实现，
+ * 重载了多个方法，selectOne、selectMap、selectList
  */
 public class DefaultSqlSession implements SqlSession {
 
+  // mybatis的全局配置对象
   private final Configuration configuration;
+  // 底层所依赖的executor
   private final Executor executor;
 
+  // 自动提交
   private final boolean autoCommit;
+  // 当前缓存中是否有脏数据
   private boolean dirty;
+  // 为防止用户忘记关闭已打开的游标对象，在调用close()方法时，会遍历cursorList，依次关闭这些游标对象
   private List<Cursor<?>> cursorList;
 
   public DefaultSqlSession(Configuration configuration, Executor executor, boolean autoCommit) {
@@ -317,6 +325,7 @@ public class DefaultSqlSession implements SqlSession {
   }
 
   private Object wrapCollection(final Object object) {
+    // 包装参数， 也就是说在Mapper.xml文件中可以直接使用 <foreach collection='list'>
     if (object instanceof Collection) {
       StrictMap<Object> map = new StrictMap<>();
       map.put("collection", object);
