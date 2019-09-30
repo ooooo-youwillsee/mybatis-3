@@ -600,19 +600,24 @@ public class Configuration {
   }
 
   public Executor newExecutor(Transaction transaction, ExecutorType executorType) {
+    // 默认创建simpleExecutor，但内部都会使用RoutingStatementHandler（策略模式）
     executorType = executorType == null ? defaultExecutorType : executorType;
     executorType = executorType == null ? ExecutorType.SIMPLE : executorType;
     Executor executor;
     if (ExecutorType.BATCH == executorType) {
       executor = new BatchExecutor(this, transaction);
     } else if (ExecutorType.REUSE == executorType) {
+      // 重用statement对象，减少预编译时间
       executor = new ReuseExecutor(this, transaction);
     } else {
       executor = new SimpleExecutor(this, transaction);
     }
+    // 在mybatis-config.xml中setting标签中开启二级缓存，
+    // 则会使用cachingExecuotr来装饰executor来实现二级缓存
     if (cacheEnabled) {
       executor = new CachingExecutor(executor);
     }
+    // 应用所有插件
     executor = (Executor) interceptorChain.pluginAll(executor);
     return executor;
   }
