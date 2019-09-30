@@ -30,8 +30,11 @@ import org.apache.ibatis.reflection.ExceptionUtil;
  */
 public class Plugin implements InvocationHandler {
 
+  // 代理的目标对象
   private final Object target;
+  // interceptor
   private final Interceptor interceptor;
+  // @signature注解信息
   private final Map<Class<?>, Set<Method>> signatureMap;
 
   private Plugin(Object target, Interceptor interceptor, Map<Class<?>, Set<Method>> signatureMap) {
@@ -41,8 +44,10 @@ public class Plugin implements InvocationHandler {
   }
 
   public static Object wrap(Object target, Interceptor interceptor) {
+    // 获取用户自定义的@signture注解
     Map<Class<?>, Set<Method>> signatureMap = getSignatureMap(interceptor);
     Class<?> type = target.getClass();
+    // 获取所有的接口类，也就是说插件可以实现Executor、StatementHandler、ResultSetHandler、ParameterHandler接口
     Class<?>[] interfaces = getAllInterfaces(type, signatureMap);
     if (interfaces.length > 0) {
       return Proxy.newProxyInstance(
@@ -56,10 +61,14 @@ public class Plugin implements InvocationHandler {
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     try {
+      // method.getDeclaringClass() --> 可能是executor中一个方法
+      // 获取的methods是 注解中声明要拦截的方法列表
       Set<Method> methods = signatureMap.get(method.getDeclaringClass());
       if (methods != null && methods.contains(method)) {
+        // 如果这个方法要被拦截，则调用intercept()方法
         return interceptor.intercept(new Invocation(target, method, args));
       }
+      // 否则，直接执行target中的方法
       return method.invoke(target, args);
     } catch (Exception e) {
       throw ExceptionUtil.unwrapThrowable(e);
