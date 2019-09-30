@@ -22,7 +22,12 @@ import java.sql.Connection;
  *
  * @author Clinton Begin
  *
- * mybatis中sqlSession的工厂
+ * mybatis中sqlSession的工厂,
+ *
+ * 在spring整合mybatis中
+ *    提供了SqlSessionFactoryBean来创建SqlSessionFactory对象
+ *    提供了MapperFactoryBean来通过getObject()方法创建mapper代理接口
+ *    提供了MapperScannerConfigurer来扫描mapper接口，注册mapper的beanDefinition
  */
 public interface SqlSessionFactory {
 

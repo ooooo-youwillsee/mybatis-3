@@ -47,7 +47,7 @@ public class Plugin implements InvocationHandler {
     // 获取用户自定义的@signture注解
     Map<Class<?>, Set<Method>> signatureMap = getSignatureMap(interceptor);
     Class<?> type = target.getClass();
-    // 获取所有的接口类，也就是说插件可以实现Executor、StatementHandler、ResultSetHandler、ParameterHandler接口
+    // 获取所有的接口类，就是这些Executor、StatementHandler、ResultSetHandler、ParameterHandler接口
     Class<?>[] interfaces = getAllInterfaces(type, signatureMap);
     if (interfaces.length > 0) {
       return Proxy.newProxyInstance(
